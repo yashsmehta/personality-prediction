@@ -7,6 +7,7 @@ import time
 from datetime import timedelta
 
 import torch
+from torch.utils.data import DataLoader
 from transformers import *
 
 
@@ -39,7 +40,7 @@ def load_df(datafile):
                     "AGR":1 if line[4].lower()=='y' else 0,
                     "CON":1 if line[5].lower()=='y' else 0,
                     "OPN":1 if line[6].lower()=='y' else 0}, ignore_index=True)
-            break
+
     return df
 
 
@@ -71,11 +72,6 @@ model = model_class.from_pretrained(pretrained_weights, output_hidden_states=Tru
                                 # )
 tokenizer=tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=True)
 
-model=model.cuda()
-
-#* model.parameters() returns a generator obj
-print('model loaded to gpu? ', next(model.parameters()).is_cuda)
-print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 
 
 def dataset_embeddings(datafile):
@@ -85,34 +81,57 @@ def dataset_embeddings(datafile):
     input_ids = []
 
     df = load_df(datafile)
-
+    cnt=0
     for ind in df.index: 
+
         text = preprocess_text(df['text'][ind])
         tokens = tokenizer.tokenize(text)
         token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length = MAX_TOKENIZATION_LENGTH, pad_to_max_length=True)
+        if(cnt<10):
+            print(tokens)
         
         input_ids.append(token_ids)
         targets.append(df['OPN'][ind])
-            
+
+        cnt+=1
+        
     return input_ids, targets
+
 
 with torch.no_grad():
     input_ids, targets = dataset_embeddings(datafile)
-    print(len(input_ids))
     input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)
     targets = torch.from_numpy(np.array(targets)).long().to(DEVICE)
 
 print(input_ids.shape)
 print(targets.shape)
 
-# bert_output = model(input_ids)
+tmpdataset = input_ids, targets
+batch_size = 32
 
-# print(targets)
-# print(hidden_features)
-# file = open('pkl data/imdb-test-'+pretrained_weights, 'wb')
-# pickle.dump(zip(hidden_features, targets), file)
-# file.close()
+data_loader = DataLoader(dataset=tmpdataset,
+                          batch_size=batch_size,
+                          shuffle=True,
+                        )
 
-# print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
+model=model.cuda()
+
+#* model.parameters() returns a generator obj
+print('model loaded to gpu? ', next(model.parameters()).is_cuda)
+print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
+
+hidden_features=[]
+all_targets=[]
+# for input_ids, targets in data_loader:
+#     with torch.no_grad():
+#         all_targets.append(targets)        
+#         bert_output = model(input_ids)
+        
+#         tmp=[]
+#         for ii in range(n_hl):
+#             tmp.append(bert_output[2][ii+1][:,0,:].cpu().numpy())
+        
+#         hidden_features.append(np.array(tmp))
+
+
 print(timedelta(seconds=int(time.time()-start)), end=' ')
-# print('extracting embeddings for the test set: DONE!')
