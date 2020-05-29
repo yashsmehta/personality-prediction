@@ -1,2 +1,3 @@
 *.out
+.vscode/
 submit_job.sbatch

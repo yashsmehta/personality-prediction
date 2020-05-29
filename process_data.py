@@ -2,12 +2,23 @@ import numpy as np
 import pandas as pd
 import csv
 import pickle
+import re
 import time
 from datetime import timedelta
 
 import torch
 from transformers import *
 
+
+def preprocess_text(sentence):
+    # Remove punctuations and numbers
+    sentence = re.sub('[^a-zA-Z]', ' ', sentence)
+    # Single character removal (except I)
+    sentence = re.sub(r"\s+[a-zA-HJ-Z]\s+", ' ', sentence)
+    # Removing multiple spaces
+    sentence = re.sub(r'\s+', ' ', sentence)
+
+    return sentence
 
 def load_df(datafile):
     with open(datafile, "rt") as csvf:
@@ -19,7 +30,7 @@ def load_df(datafile):
                 first_line=False
                 continue
             
-            text = line[1]    
+            text = line[1]
 
             df = df.append({"user": line[0],
                     "text":text,
@@ -28,7 +39,7 @@ def load_df(datafile):
                     "AGR":1 if line[4].lower()=='y' else 0,
                     "CON":1 if line[5].lower()=='y' else 0,
                     "OPN":1 if line[6].lower()=='y' else 0}, ignore_index=True)
-        
+            break
     return df
 
 
@@ -66,21 +77,42 @@ model=model.cuda()
 print('model loaded to gpu? ', next(model.parameters()).is_cuda)
 print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 
-hidden_features=[]
-all_targets=[]
 
-df = load_df(datafile)
+def dataset_embeddings(datafile):
+    hidden_features=[]
+    targets=[]
+    token_len=[]
+    input_ids = []
 
-for ind in df.index: 
+    df = load_df(datafile)
 
-    with torch.no_grad():
-        all_targets.append(df['OPN'][ind])
-        bert_output = model(df['text'][ind])
+    for ind in df.index: 
+        text = preprocess_text(df['text'][ind])
+        tokens = tokenizer.tokenize(text)
+        token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length = MAX_TOKENIZATION_LENGTH, pad_to_max_length=True)
         
-        last_features=bert_output[0][:,0,:]
-        tmp=[]
-        for ii in range(n_hl):
-            tmp.append(bert_output[2][ii+1][:,0,:].cpu().numpy())
-        
-        hidden_features.append(np.array(tmp))
+        input_ids.append(token_ids)
+        targets.append(df['OPN'][ind])
+            
+    return input_ids, targets
 
+with torch.no_grad():
+    input_ids, targets = dataset_embeddings(datafile)
+    print(len(input_ids))
+    input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)
+    targets = torch.from_numpy(np.array(targets)).long().to(DEVICE)
+
+print(input_ids.shape)
+print(targets.shape)
+
+# bert_output = model(input_ids)
+
+# print(targets)
+# print(hidden_features)
+# file = open('pkl data/imdb-test-'+pretrained_weights, 'wb')
+# pickle.dump(zip(hidden_features, targets), file)
+# file.close()
+
+# print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
+print(timedelta(seconds=int(time.time()-start)), end=' ')
+# print('extracting embeddings for the test set: DONE!')
