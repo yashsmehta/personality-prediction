@@ -7,6 +7,7 @@ import numpy as np
 import csv
 import pickle
 import time
+from datetime import timedelta
 
 import utils
 
@@ -84,6 +85,10 @@ validation_split = 0.15
 history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
                     validation_split=validation_split, verbose = 1)
 
+print('acc: ', history.history['acc'])
+print('val acc: ', history.history['val_acc'])
+print('loss: ', history.history['loss'])
+print('val loss: ', history.history['val_loss'])
 
 print(timedelta(seconds=int(time.time()-start)), end=' ')
 # print(model.evaluate(inputs, targets, batch_size=1000))
