@@ -77,16 +77,13 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
 
 print(model.summary())
 validation_split = 0.15
-steps_per_epoch = int((1-validation_split)*n_batches)
-validation_steps = int(validation_split*n_batches)
+# steps_per_epoch = int((1-validation_split)*n_batches)
+# validation_steps = int(validation_split*n_batches)
 
 # steps_per_epoch=steps_per_epoch, validation_steps=validation_steps
 history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
                     validation_split=validation_split, verbose = 1)
 
-
-print(history.history['accuracy'])
-print(history.history['loss'])
 
 print(timedelta(seconds=int(time.time()-start)), end=' ')
 # print(model.evaluate(inputs, targets, batch_size=1000))
