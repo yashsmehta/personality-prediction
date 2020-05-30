@@ -35,6 +35,7 @@ data = pickle.load(file)
 data_x, data_y = list(zip(*data))
 file.close()
 
+#alphaW is responsible for which BERT layer embedding we will be using
 if(layer == 'all'):
     alphaW = np.full([n_hl], 1/n_hl)
 
@@ -54,12 +55,14 @@ for ii in range(n_batches):
     targets.extend(data_y[ii])
 
 inputs = np.array(inputs)
+#convert targets to one-hot encoding
 targets = tf.keras.utils.to_categorical(np.array(targets), num_classes=n_classes)
 
 n_data = targets.shape[0]
 
 model = tf.keras.models.Sequential()
 
+#define the neural network architecture
 if (network  == 'fc'):
     model.add(tf.keras.layers.Dense(500, input_dim=hidden_dim, activation='relu'))
     model.add(tf.keras.layers.Dense(50, activation='relu'))
