@@ -5,6 +5,7 @@ import tensorflow_datasets as tfds
 from sklearn.model_selection import KFold
 import numpy as np
 import csv
+import pickle
 import time
 
 import utils
@@ -14,8 +15,6 @@ n_classes=2
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer = utils.parse_args()
 
 start=time.time()
-randkey = random.PRNGKey(seed)
-rng = npr.RandomState(seed)
 
 if (embed=='bert-base'):
     pretrained_weights='bert-base-uncased'
@@ -27,7 +26,7 @@ elif (embed=='bert-large'):
     n_hl=24
     hidden_dim=1024
 
-file = open(inp_dir+dataset_type+'-'+pretrained_weights+'.pkl', 'rb')
+file = open(inp_dir+dataset_type+'-'+embed+'.pkl', 'rb')
 
 data = pickle.load(file)
 hidden_features, targets = list(zip(*data))
@@ -51,12 +50,11 @@ if (network  == 'fc'):
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
               loss=tf.keras.losses.binary_crossentropy(from_logits=True), 
-              #* while using MSE, have to make the labels into one-hot (uncomment to_categorical line on top!)
-            #   loss=tf.keras.losses.MeanSquaredError(),
               metrics=['mse', 'accuracy'])
 
 print(model.summary())
-start_time = time.time()
+print(time.time() - start)
+# start_time = time.time()
 
 # history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
 #                     validation_split=0.15, verbose = 1)
