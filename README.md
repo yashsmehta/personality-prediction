@@ -35,6 +35,7 @@ python finetuneNet.py
 LM_extractor.py
 ```
 On a RTX2080 GPU, the -embed 'bert-base' extractor takes about ~2m 30s and 'bert-large' takes about ~5m 30s
+
 On a CPU, 'bert-base' extractor takes about ~25m
 
 ```bash
