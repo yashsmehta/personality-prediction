@@ -3,3 +3,4 @@ torchvision
 transformers #HuggingFace library
 numpy 
 pandas
+tensorflow
