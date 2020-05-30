@@ -43,11 +43,11 @@ def parse_args():
 
 def parse_args_extractor():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-token_length", type=int, default=128)
-    ap.add_argument("-inp_dir", type=str, default='data/glue_data')
-    ap.add_argument("-task", type=str, default='CoLA')
+    ap.add_argument("-dataset_type", type=str, default='essays')
+    ap.add_argument("-token_length", type=int, default=512)
+    ap.add_argument("-datafile", type=str, default='data/essays.csv')
     ap.add_argument('-batch_size', type=str, default=32)
     ap.add_argument("-embed", type=str, default='bert-base-uncased')
-    ap.add_argument("-op_dir", type=str, default='pkl_data')
+    ap.add_argument("-op_dir", type=str, default='pkl_data/')
     args = ap.parse_args()
-    return args.token_length, args.inp_dir, args.task, args.batch_size, args.embed, args.op_dir
+    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir

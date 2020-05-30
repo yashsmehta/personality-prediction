@@ -19,7 +19,7 @@ def preprocess_text(sentence):
     return sentence
 
 
-def load_df(datafile):
+def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
         csvreader=csv.reader(csvf, delimiter=',',quotechar='"')
         first_line=True
@@ -41,19 +41,19 @@ def load_df(datafile):
 
     return df
 
-def dataset_embeddings(datafile, tokenizer, MAX_TOKENIZATION_LENGTH):
+def essays_embeddings(datafile, tokenizer, token_length):
     hidden_features=[]
     targets=[]
     token_len=[]
     input_ids = []
 
-    df = load_df(datafile)
+    df = load_essays_df(datafile)
     cnt=0
     for ind in df.index: 
 
         text = preprocess_text(df['text'][ind])
         tokens = tokenizer.tokenize(text)
-        token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length = MAX_TOKENIZATION_LENGTH, pad_to_max_length=True)
+        token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length = token_length, pad_to_max_length=True)
         if(cnt<10):
             print(tokens)
         
@@ -65,11 +65,10 @@ def dataset_embeddings(datafile, tokenizer, MAX_TOKENIZATION_LENGTH):
     return input_ids, targets
 
 
-
 class MyMapDataset(Dataset):
-  def __init__(self, dataset_type, datafile , tokenizer, MAX_TOKENIZATION_LENGTH, DEVICE):
+  def __init__(self, dataset_type, datafile , tokenizer, token_length, DEVICE):
     if(dataset_type == 'essays'):
-        input_ids, targets = dataset_embeddings(datafile, tokenizer, MAX_TOKENIZATION_LENGTH)
+        input_ids, targets = essays_embeddings(datafile, tokenizer, token_length)
     
     
     input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)

@@ -11,8 +11,10 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import *
 
 from data_utils import MyMapDataset
+import utils
 
 start=time.time()
+dataset_type, token_length, datafile, batch_size, embed, op_dir = utils.parse_args_extractor()
 
 if torch.cuda.is_available():        
     DEVICE = torch.device("cuda")
@@ -29,19 +31,14 @@ else:
 # MODEL=(DistilBertModel, DistilBertTokenizer, 'distilbert-base-uncased')
 MODEL=(BertModel, BertTokenizer, 'bert-base-uncased')
 n_hl=12
-MAX_TOKENIZATION_LENGTH=512
-datafile = 'data/essays.csv'
-dataset_type = 'essays'
-
 
 model_class, tokenizer_class, pretrained_weights=MODEL
 
 model = model_class.from_pretrained(pretrained_weights, output_hidden_states=True) # output_attentions=False
 tokenizer=tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=True)
 
-batch_size = 32
 
-map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, MAX_TOKENIZATION_LENGTH, DEVICE)
+map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE)
 
 data_loader = DataLoader(dataset=map_dataset,
                           batch_size=batch_size,
@@ -68,7 +65,7 @@ for input_ids, targets in data_loader:
         
         hidden_features.append(np.array(tmp))
 
-file = open('pkl_data/essays'+pretrained_weights+'.pkl', 'wb')
+file = open(op_dir+dataset_type+pretrained_weights+'.pkl', 'wb')
 pickle.dump(zip(hidden_features, all_targets), file)
 file.close()
 
