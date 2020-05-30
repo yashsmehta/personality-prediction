@@ -29,7 +29,7 @@ elif (embed=='bert-large'):
 file = open(inp_dir+dataset_type+'-'+embed+'.pkl', 'rb')
 
 data = pickle.load(file)
-hidden_features, targets = list(zip(*data))
+data_x, data_y = list(zip(*data))
 file.close()
 
 if(layer == 'all'):
@@ -39,7 +39,15 @@ else:
     alphaW = np.zeros([n_hl])
     alphaW[int(layer) - 1] = 1
 
-inputs = np.einsum('k,tkij->tij', alphaW, hidden_features)
+#just changing the way data is stored (tuples of minibatches) and getting the output for the required layer of BERT using alphaW
+#data_x[ii].shape = (12, batch_size, 768)
+inputs = []
+targets = []
+n_data = len(targets)
+
+for ii in range(n_data):
+    inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
+    targets.extend(data_y[ii])
 
 model = tf.keras.models.Sequential()
 
@@ -49,21 +57,23 @@ if (network  == 'fc'):
     model.add(tf.keras.layers.Dense(n_classes))
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-              loss=tf.keras.losses.binary_crossentropy(from_logits=True), 
+              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True), 
               metrics=['mse', 'accuracy'])
 
 print(model.summary())
-print(time.time() - start)
-# start_time = time.time()
+validation_split = 0.15
+steps_per_epoch = int(((1-validation_split)*n_data)/batch_size)
+validation_steps = int((validation_split*n_data)/batch_size)
 
-# history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
-#                     validation_split=0.15, verbose = 1)
+history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
+                    validation_split=validation_split, verbose = 1, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps)
 
-# elapsed_time = time.time() - start_time
+elapsed_time = time.time() - start_time
 
-# print(history.history['accuracy'])
-# print(history.history['loss'])
-# # print(model.evaluate(test_x, test_y, batch_size=1000))
+print(history.history['accuracy'])
+print(history.history['loss'])
+
+# print(model.evaluate(inputs, targets, batch_size=1000))
 
 # if (write_file):
 #     results_file='results.csv'

@@ -59,7 +59,7 @@ hidden_features=[]
 all_targets=[]
 for input_ids, targets in data_loader:
     with torch.no_grad():
-        all_targets.append(targets.numpy())        
+        all_targets.append(targets.cpu().numpy())        
         bert_output = model(input_ids)
         
         tmp=[]
