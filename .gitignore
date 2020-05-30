@@ -1,3 +1,5 @@
-*.out
 .vscode/
+pkl_data/
+__pycache__/
+*.out
 submit_job.sbatch
