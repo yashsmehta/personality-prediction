@@ -1,5 +1,6 @@
-torch
+torch   #for the LM_extractor
 torchvision
+tensorflow #for finetuneNet.py
 transformers #HuggingFace library
 numpy 
 pandas

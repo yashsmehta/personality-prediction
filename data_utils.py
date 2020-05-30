@@ -53,6 +53,7 @@ def essays_embeddings(datafile, tokenizer, token_length):
 
         text = preprocess_text(df['text'][ind])
         tokens = tokenizer.tokenize(text)
+        token_len.append(len(tokens))
         token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length = token_length, pad_to_max_length=True)
         if(cnt<10):
             print(tokens)
@@ -61,9 +62,9 @@ def essays_embeddings(datafile, tokenizer, token_length):
         targets.append(df['OPN'][ind])
 
         cnt+=1
-        
+    print(token_len)
+    print(np.mean(token_len))
     return input_ids, targets
-
 
 class MyMapDataset(Dataset):
   def __init__(self, dataset_type, datafile , tokenizer, token_length, DEVICE):
