@@ -48,11 +48,12 @@ data_loader = DataLoader(dataset=map_dataset,
                           shuffle=True,
                         )
 
-model=model.cuda()
+if(DEVICE == torch.device("cuda")):
+    model=model.cuda()
+    #* model.parameters() returns a generator obj
+    # print('model loaded to gpu? ', next(model.parameters()).is_cuda)
+    print('\ngpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 
-#* model.parameters() returns a generator obj
-# print('model loaded to gpu? ', next(model.parameters()).is_cuda)
-print('\ngpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 print('starting to extract LM embeddings...')
 
 hidden_features=[]
@@ -72,6 +73,5 @@ file = open(op_dir+dataset_type+'-'+embed+'.pkl', 'wb')
 pickle.dump(zip(hidden_features, all_targets), file)
 file.close()
 
-print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 print(timedelta(seconds=int(time.time()-start)), end=' ')
 print('extracting embeddings for Essays dataset: DONE!')
