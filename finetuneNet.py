@@ -11,8 +11,10 @@ import time
 import utils
 
 
-n_classes=2
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer = utils.parse_args()
+n_classes=2
+np.random.seed(seed)
+tf.set_random_seed(seed)
 
 start=time.time()
 
@@ -43,11 +45,24 @@ else:
 #data_x[ii].shape = (12, batch_size, 768)
 inputs = []
 targets = []
-n_data = len(targets)
 
-for ii in range(n_data):
+n_batches = len(data_y)
+
+for ii in range(n_batches):
     inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
     targets.extend(data_y[ii])
+
+inputs = np.array(inputs)
+# targets = np.array(preprocessing.OneHotEncoder(np.array(targets)))
+targets = tf.keras.utils.to_categorical(np.array(targets), num_classes=n_classes)
+
+print(inputs.shape)
+print(inputs[:10])
+print(targets.shape)
+print(targets[:10])
+
+n_data = targets.shape[0]
+print(n_data)
 
 model = tf.keras.models.Sequential()
 
@@ -62,21 +77,21 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
 
 print(model.summary())
 validation_split = 0.15
-steps_per_epoch = int(((1-validation_split)*n_data)/batch_size)
-validation_steps = int((validation_split*n_data)/batch_size)
+steps_per_epoch = int((1-validation_split)*n_batches)
+validation_steps = int(validation_split*n_batches)
 
+# steps_per_epoch=steps_per_epoch, validation_steps=validation_steps
 history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
-                    validation_split=validation_split, verbose = 1, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps)
+                    validation_split=validation_split, verbose = 1)
 
-elapsed_time = time.time() - start_time
 
 print(history.history['accuracy'])
 print(history.history['loss'])
 
+print(timedelta(seconds=int(time.time()-start)), end=' ')
 # print(model.evaluate(inputs, targets, batch_size=1000))
 
-# if (write_file):
-#     results_file='results.csv'
-#     meta_info=(lr, epochs, seed, embed, layer)
-#     utils.file_writer(results_file, meta_info, acc, loss_val)
-# # hidden_features || targets : (n_hl, 32, hidden_dim) || (32, 2)
+if (write_file):
+    results_file='results.csv'
+    meta_info=(lr, epochs, seed, embed, layer)
+    utils.file_writer(results_file, meta_info, acc, loss_val)
