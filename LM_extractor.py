@@ -29,8 +29,11 @@ else:
 
 #* Model          | Tokenizer          | Pretrained weights shortcut
 # MODEL=(DistilBertModel, DistilBertTokenizer, 'distilbert-base-uncased')
-MODEL=(BertModel, BertTokenizer, 'bert-base-uncased')
-n_hl=12
+if (embed=='bert-base'):
+    n_hl=12; MODEL=(BertModel, BertTokenizer, 'bert-base-uncased')
+
+elif (embed=='bert-large'):
+    n_hl=24; MODEL=(BertModel, BertTokenizer, 'bert-large-uncased')
 
 model_class, tokenizer_class, pretrained_weights=MODEL
 
@@ -56,7 +59,7 @@ hidden_features=[]
 all_targets=[]
 for input_ids, targets in data_loader:
     with torch.no_grad():
-        all_targets.append(targets)        
+        all_targets.append(targets.cpu().numpy())        
         bert_output = model(input_ids)
         
         tmp=[]
@@ -65,7 +68,7 @@ for input_ids, targets in data_loader:
         
         hidden_features.append(np.array(tmp))
 
-file = open(op_dir+dataset_type+pretrained_weights+'.pkl', 'wb')
+file = open(op_dir+dataset_type+'-'+embed+'.pkl', 'wb')
 pickle.dump(zip(hidden_features, all_targets), file)
 file.close()
 

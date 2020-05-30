@@ -39,6 +39,12 @@ def load_essays_df(datafile):
                     "CON":1 if line[5].lower()=='y' else 0,
                     "OPN":1 if line[6].lower()=='y' else 0}, ignore_index=True)
 
+    print('EXT : ', df['EXT'].value_counts())
+    print('NEU : ', df['NEU'].value_counts())
+    print('AGR : ', df['AGR'].value_counts())
+    print('CON : ', df['CON'].value_counts())
+    print('OPN : ', df['OPN'].value_counts())
+
     return df
 
 def essays_embeddings(datafile, tokenizer, token_length):
@@ -53,6 +59,7 @@ def essays_embeddings(datafile, tokenizer, token_length):
 
         text = preprocess_text(df['text'][ind])
         tokens = tokenizer.tokenize(text)
+        token_len.append(len(tokens))
         token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length = token_length, pad_to_max_length=True)
         if(cnt<10):
             print(tokens)
@@ -61,9 +68,9 @@ def essays_embeddings(datafile, tokenizer, token_length):
         targets.append(df['OPN'][ind])
 
         cnt+=1
-        
+    print('token lengths : ', token_len)
+    print('average length : ', int(np.mean(token_len)))
     return input_ids, targets
-
 
 class MyMapDataset(Dataset):
   def __init__(self, dataset_type, datafile , tokenizer, token_length, DEVICE):
