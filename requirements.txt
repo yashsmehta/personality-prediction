@@ -1,6 +1,6 @@
 torch   #for the LM_extractor
 torchvision
-tensorflow #for finetuneNet.py
+tensorflow=1.15 #for finetuneNet.py
 transformers #HuggingFace library
 numpy 
 pandas

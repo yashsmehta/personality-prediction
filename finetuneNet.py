@@ -15,7 +15,7 @@ import utils
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer = utils.parse_args()
 n_classes=2
 np.random.seed(seed)
-tf.set_random_seed(seed)
+tf.compat.v1.set_random_seed(seed)
 
 start=time.time()
 
@@ -35,6 +35,7 @@ data = pickle.load(file)
 data_x, data_y = list(zip(*data))
 file.close()
 
+#alphaW is responsible for which BERT layer embedding we will be using
 if(layer == 'all'):
     alphaW = np.full([n_hl], 1/n_hl)
 
@@ -54,19 +55,14 @@ for ii in range(n_batches):
     targets.extend(data_y[ii])
 
 inputs = np.array(inputs)
-# targets = np.array(preprocessing.OneHotEncoder(np.array(targets)))
+#convert targets to one-hot encoding
 targets = tf.keras.utils.to_categorical(np.array(targets), num_classes=n_classes)
 
-print(inputs.shape)
-print(inputs[:10])
-print(targets.shape)
-print(targets[:10])
-
 n_data = targets.shape[0]
-print(n_data)
 
 model = tf.keras.models.Sequential()
 
+#define the neural network architecture
 if (network  == 'fc'):
     model.add(tf.keras.layers.Dense(500, input_dim=hidden_dim, activation='relu'))
     model.add(tf.keras.layers.Dense(50, activation='relu'))
@@ -78,10 +74,6 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
 
 print(model.summary())
 validation_split = 0.15
-# steps_per_epoch = int((1-validation_split)*n_batches)
-# validation_steps = int(validation_split*n_batches)
-
-# steps_per_epoch=steps_per_epoch, validation_steps=validation_steps
 history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
                     validation_split=validation_split, verbose = 1)
 
@@ -91,7 +83,7 @@ print('loss: ', history.history['loss'])
 print('val loss: ', history.history['val_loss'])
 
 print(timedelta(seconds=int(time.time()-start)), end=' ')
-# print(model.evaluate(inputs, targets, batch_size=1000))
+# print(model.evaluate(inputs, targets, batch_size=batch_size))
 
 if (write_file):
     results_file='results.csv'

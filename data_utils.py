@@ -7,7 +7,8 @@ from torch.utils.data import DataLoader, Dataset
 import torch
 from transformers import *
 
-
+# note: might not be the best preprocessor since it completely removes all punctuations. Since most of the essays are exceeding 512 words, we are currently using this.
+# need to experiment with other ones
 def preprocess_text(sentence):
     # Remove punctuations and numbers
     sentence = re.sub('[^a-zA-Z]', ' ', sentence)

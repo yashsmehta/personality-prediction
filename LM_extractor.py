@@ -14,6 +14,7 @@ from data_utils import MyMapDataset
 import utils
 
 start=time.time()
+#argument extractor
 dataset_type, token_length, datafile, batch_size, embed, op_dir = utils.parse_args_extractor()
 
 if torch.cuda.is_available():        
@@ -37,10 +38,13 @@ elif (embed=='bert-large'):
 
 model_class, tokenizer_class, pretrained_weights=MODEL
 
+#load the LM model and tokenizer from the HuggingFace Transformeres library
 model = model_class.from_pretrained(pretrained_weights, output_hidden_states=True) # output_attentions=False
 tokenizer=tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=True)
 
-
+#create a class which can be passed to the pyTorch dataloader. responsible for returning tokenized and encoded values of the Essays dataset
+#this class will have __getitem__(self,idx) function which will return input_ids and target values
+#currently it is just returning the targets for the 'OPN' trait - need to generalize this
 map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE)
 
 data_loader = DataLoader(dataset=map_dataset,
@@ -48,11 +52,12 @@ data_loader = DataLoader(dataset=map_dataset,
                           shuffle=True,
                         )
 
-model=model.cuda()
+if(DEVICE == torch.device("cuda")):
+    model=model.cuda()
+    # model.parameters() returns a generator obj
+    # print('model loaded to gpu? ', next(model.parameters()).is_cuda)
+    print('\ngpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 
-#* model.parameters() returns a generator obj
-# print('model loaded to gpu? ', next(model.parameters()).is_cuda)
-print('\ngpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 print('starting to extract LM embeddings...')
 
 hidden_features=[]
@@ -60,18 +65,20 @@ all_targets=[]
 for input_ids, targets in data_loader:
     with torch.no_grad():
         all_targets.append(targets.cpu().numpy())        
+        #get the LM embeddings
         bert_output = model(input_ids)
         
+        # bert_output[2](this id gives all BERT outputs)[ii+1](which BERT layer)[:,0,:](taking the <CLS> output)
         tmp=[]
         for ii in range(n_hl):
             tmp.append(bert_output[2][ii+1][:,0,:].cpu().numpy())
         
         hidden_features.append(np.array(tmp))
 
+#storing the embeddings into a pickle file
 file = open(op_dir+dataset_type+'-'+embed+'.pkl', 'wb')
 pickle.dump(zip(hidden_features, all_targets), file)
 file.close()
 
-print('gpu mem alloc: ', round(torch.cuda.memory_allocated()*1e-9, 2), ' GB')
 print(timedelta(seconds=int(time.time()-start)), end=' ')
 print('extracting embeddings for Essays dataset: DONE!')
