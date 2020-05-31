@@ -7,7 +7,7 @@ This repository is a set of experiments written in tensorflow + pytorch to explo
 Pull this repository from GitLab via:
 
 ```bash
-git clone git@gitlab.com:yashsmehta/personality.git
+git clone git@gitlab.com:ml-automated-personality-detection/personality.git
 ```
 
 See the requirements.txt for the list of dependent packages which can be installed via:
