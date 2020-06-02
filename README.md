@@ -4,20 +4,20 @@ This repository is a set of experiments written in tensorflow + pytorch to explo
 
 ## Installation
 
-Pull the this package from GitLab via:
+Pull this repository from GitLab via:
 
 ```bash
-git clone git@gitlab.com:yashsmehta/personality.git
+git clone git@gitlab.com:ml-automated-personality-detection/personality.git
 ```
 
-See the requirements.txt for the list of dependent packages. Can be installed via:
+See the requirements.txt for the list of dependent packages which can be installed via:
 
 ```bash
 pip -r requirements.txt
 ```
 
 ## Usage
-First run LMextractor.py, which passes the dataset through the language model and then stores the embeddings in a pickle file. Creating this 'new dataset' saves us a lot of compute time and allows effective searching of the hyperparameters for the finetuning network. Before running the code, create a pkl_data folder in the repo folder. All the arguments are optional and passing no arguments runs the extractor with the default values.
+First run the LM extractor code which passes the dataset through the language model and stores the embeddings (of all layers) in a pickle file. Creating this 'new dataset' saves us a lot of compute time and allows effective searching of the hyperparameters for the finetuning network. Before running the code, create a pkl_data folder in the repo folder. All the arguments are optional and passing no arguments runs the extractor with the default values.
 
 ```bash
 python LM_extractor.py -dataset_type 'essays' -token_length 512 -datafile 'data/essays.csv' -batch_size 32 -embed 'bert-base' -op_dir 'pkl_data'
