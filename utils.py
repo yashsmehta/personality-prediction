@@ -58,3 +58,14 @@ def parse_args_extractor():
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
     args = ap.parse_args()
     return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir
+
+
+def parse_args_metafeatures():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-dataset_type", type=str, default='essays')
+    ap.add_argument("-datafile", type=str, default='meta_features_data/essays_concept_count_final.p')
+    ap.add_argument("-feature_type", type=str, default='hourglass')
+    ap.add_argument("-op_dir", type=str, default='data/')
+    args = ap.parse_args()
+    return args.dataset_type, args.datafile, args.feature_type, args.op_dir
+
