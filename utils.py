@@ -3,9 +3,10 @@ import numpy as np
 import argparse
 from datetime import datetime, timedelta
 
+
 def file_writer(results_file, meta_info, acc, loss_val):
-    lr, epochs, seed, embed, layer=meta_info    
-    params = ["EMBED ", embed, " LAYER ", str(layer)," LR ", str(lr)," SEED ", str(seed), " EPOCHS ", str(epochs)]
+    lr, epochs, seed, embed, layer = meta_info
+    params = ["EMBED ", embed, " LAYER ", str(layer), " LR ", str(lr), " SEED ", str(seed), " EPOCHS ", str(epochs)]
 
     with open(results_file, 'a') as csvFile:
         writer = csv.writer(csvFile)
@@ -19,12 +20,14 @@ def file_writer(results_file, meta_info, acc, loss_val):
     csvFile.close()
     return
 
+
 def str_to_bool(value):
     if value.lower() in {'false', 'f', '0', 'no', 'n'}:
         return False
     elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
         return True
     raise ValueError(f'{value} is not a valid boolean value')
+
 
 def parse_args():
     ap = argparse.ArgumentParser()
@@ -46,8 +49,10 @@ def parse_args():
 def parse_args_extractor():
     ap = argparse.ArgumentParser()
     ap.add_argument("-dataset_type", type=str, default='essays')
+    # ap.add_argument("-dataset_type", type=str, default='pandora')  # pandora example
     ap.add_argument("-token_length", type=int, default=512)
     ap.add_argument("-datafile", type=str, default='data/essays.csv')
+    # ap.add_argument("-datafile", type=str, default='data/pandora/')  # pandora example
     ap.add_argument('-batch_size', type=str, default=32)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
