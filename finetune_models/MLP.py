@@ -1,7 +1,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import tensorflow as tf
-import tensorflow_datasets as tfds
 from sklearn.model_selection import KFold
 import numpy as np
 import csv
@@ -77,8 +76,8 @@ validation_split = 0.15
 history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
                     validation_split=validation_split, verbose = 1)
 
-print('acc: ', history.history['acc'])
-print('val acc: ', history.history['val_acc'])
+print('acc: ', history.history['accuracy'])
+print('val acc: ', history.history['val_accuracy'])
 print('loss: ', history.history['loss'])
 print('val loss: ', history.history['val_loss'])
 
@@ -88,4 +87,4 @@ print(timedelta(seconds=int(time.time()-start)), end=' ')
 if (write_file):
     results_file='results.csv'
     meta_info=(lr, epochs, seed, embed, layer)
-    utils.file_writer(results_file, meta_info, acc, loss_val)
+    utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'])

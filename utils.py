@@ -54,7 +54,7 @@ def parse_args_extractor():
     ap.add_argument("-datafile", type=str, default='data/essays.csv')
     # ap.add_argument("-datafile", type=str, default='data/pandora/')  # pandora example
     ap.add_argument('-batch_size', type=str, default=32)
-    ap.add_argument("-embed", type=str, default='bert-base')
+    ap.add_argument("-embed", type=str, default='albert-large')
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
     args = ap.parse_args()
     return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir
