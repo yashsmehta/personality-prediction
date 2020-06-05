@@ -1,9 +1,30 @@
 import pandas as pd
 import utils
 dataset_type, datafile, feature_type, op_dir = utils.parse_args_metafeatures()
+from collections import Counter
+import re
 
 def extract_sentic_features(x, sentic_df, feature_type):
     df = pd.DataFrame(x, columns=["concept", "count"]).set_index("concept")
+    merged_df = pd.merge(df, sentic_df, left_index=True, right_index=True)
+    if feature_type == 'hourglass':
+        drop_cols = ['primary_mood', 'secondary_mood', 'polarity_label', 'semantics1', 'semantics2', 'semantics3',
+                 'semantics4', 'semantics5']
+        merged_df = merged_df.drop(drop_cols, axis=1)
+    for col in merged_df.columns[1:]:
+        merged_df[col] *= merged_df["count"]
+
+    result = merged_df.sum()
+    result /= result["count"]
+    result = result.iloc[1:]
+    return result
+
+
+def extract_NRC_features(x, sentic_df, feature_type):
+    # tokens = re.sub('[^a-zA-Z]', ' ', x).split()
+    tokens = x.split()
+    tokens = Counter(tokens)
+    df = pd.DataFrame.from_dict(tokens, orient='index', columns=['count'])
     merged_df = pd.merge(df, sentic_df, left_index=True, right_index=True)
     if feature_type == 'hourglass':
         drop_cols = ['primary_mood', 'secondary_mood', 'polarity_label', 'semantics1', 'semantics2', 'semantics3',
@@ -29,8 +50,15 @@ if __name__ == "__main__":
         sentic_path = "meta_features_data/affectivespace.csv"
         sentic_df = pd.read_csv(sentic_path, header=None)
         sentic_df = sentic_df.set_index(sentic_df.columns[0])
+    elif feature_type == 'nrc':
+        NRC_path = "meta_features_data/NRC-Emotion-Lexicon.xlsx"
+        NRC_df = pd.read_excel(NRC_path, index_col=0)
+    elif feature_type == 'nrc-vad':
+        NRC_path = "meta_features_data/NRC-VAD-Lexicon.txt"
+        NRC_df = pd.read_csv(NRC_path, index_col=['Word'], sep='\t')
 
-    tmp = count_df["concept_count"].apply(lambda x: extract_sentic_features(x, sentic_df, feature_type))
+    # tmp = count_df["concept_count"].apply(lambda x: extract_sentic_features(x, sentic_df, feature_type))
+    tmp = count_df["TEXT"].apply(lambda x: extract_NRC_features(x, NRC_df, feature_type))
     result = pd.concat([count_df['#AUTHID'], tmp], axis=1)
     output_file = op_dir+dataset_type+'_'+feature_type+'.csv'
     result.to_csv(output_file, index=False)
