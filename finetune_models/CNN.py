@@ -55,49 +55,52 @@ for ii in range(n_batches):
 
 # inputs = np.array(inputs)
 inputs = np.reshape(inputs, (-1, hidden_dim, 1))
-# convert targets to one-hot encoding
-targets = tf.keras.utils.to_categorical(np.array(targets), num_classes=n_classes)
+full_targets = np.array(targets)
+for trait_idx in range(full_targets.shape[1]):
+    # convert targets to one-hot encoding
+    targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
 
-n_data = targets.shape[0]
-kf = KFold(n_splits=10, shuffle=True, random_state=0)
-k = 0
-loss_list = []; acc_list = []; train_acc = []; train_loss = []; val_acc = []; val_loss = []
+    n_data = targets.shape[0]
+    kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    k = 0
+    loss_list = []; acc_list = []; train_acc = []; train_loss = []; val_acc = []; val_loss = []
 
-for train_index, test_index in kf.split(inputs):
-    X_train, X_test = inputs[train_index], inputs[test_index]
-    y_train, y_test = targets[train_index], targets[test_index]
-    model = tf.keras.models.Sequential()
-    #define the neural network architecture
-    if (network == 'fc'):
-        model.add(tf.keras.layers.Conv1D(64, 3, input_shape=(hidden_dim, 1), activation='relu'))
-        model.add(tf.keras.layers.MaxPooling1D(2))
-        model.add(tf.keras.layers.Conv1D(8, 3, activation='relu'))
-        model.add(tf.keras.layers.MaxPooling1D(2))
-        model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(n_classes))
+    for train_index, test_index in kf.split(inputs):
+        X_train, X_test = inputs[train_index], inputs[test_index]
+        y_train, y_test = targets[train_index], targets[test_index]
+        model = tf.keras.models.Sequential()
+        #define the neural network architecture
+        if (network == 'fc'):
+            model.add(tf.keras.layers.Conv1D(64, 3, input_shape=(hidden_dim, 1), activation='relu'))
+            model.add(tf.keras.layers.MaxPooling1D(2))
+            model.add(tf.keras.layers.Conv1D(8, 3, activation='relu'))
+            model.add(tf.keras.layers.MaxPooling1D(2))
+            model.add(tf.keras.layers.Flatten())
+            model.add(tf.keras.layers.Dense(n_classes))
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-                  loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                  metrics=['mse', 'accuracy'])
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                      metrics=['mse', 'accuracy'])
 
-    print(model.summary())
-    validation_split = 0.15
-    history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                        validation_split=validation_split, verbose = 1)
-    result = model.evaluate(X_test, y_test, batch_size=batch_size)
+        print(model.summary())
+        validation_split = 0.15
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
+                            validation_split=validation_split, verbose = 1)
+        result = model.evaluate(X_test, y_test, batch_size=batch_size)
 
-    loss_list.append(result[0]); acc_list.append(result[1])
-    train_acc.append(history.history['accuracy'])
-    train_loss.append(history.history['loss'])
-    val_acc.append(history.history['val_accuracy'])
-    val_loss.append(history.history['val_loss'])
+        loss_list.append(result[0]); acc_list.append(result[1])
+        train_acc.append(history.history['accuracy'])
+        train_loss.append(history.history['loss'])
+        val_acc.append(history.history['val_accuracy'])
+        val_loss.append(history.history['val_loss'])
 
-    print('acc: ', history.history['accuracy'])
-    print('val acc: ', history.history['val_accuracy'])
-    print('loss: ', history.history['loss'])
-    print('val loss: ', history.history['val_loss'])
-    print(timedelta(seconds=int(time.time()-start)), end=' ')
+        print('trait: ', trait_idx)
+        print('acc: ', history.history['accuracy'])
+        print('val acc: ', history.history['val_accuracy'])
+        print('loss: ', history.history['loss'])
+        print('val loss: ', history.history['val_loss'])
+        print(timedelta(seconds=int(time.time()-start)), end=' ')
 
-total_acc = np.mean(acc_list)
-total_loss = np.mean(loss_list)
+    total_acc = np.mean(acc_list)
+    total_loss = np.mean(loss_list)
 

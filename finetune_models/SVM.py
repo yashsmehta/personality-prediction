@@ -70,23 +70,27 @@ for ii in range(n_batches):
     targets.extend(data_y[ii])
 
 inputs = np.array(inputs)
-targets = np.array(targets)
-acc_list = []
-kf = KFold(n_splits=10, shuffle=True, random_state=0)
-k = 0
-for train_index, test_index in kf.split(inputs):
-    X_train, X_test = inputs[train_index], inputs[test_index]
-    y_train, y_test = targets[train_index], targets[test_index]
-    acc = classification(X_train, X_test, y_train, y_test, 'SVM-' + dataset_type + '-' + embed + '-' + str(k))
-    print(acc)
-    acc_list.append(acc)
-    k += 1
-total_acc = np.mean(acc_list)
-print('total_acc: ', total_acc)
+full_targets = np.array(targets)
+for trait_idx in range(full_targets.shape[1]):
+    targets = full_targets[:, trait_idx]
+    acc_list = []
+    kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    k = 0
+    for train_index, test_index in kf.split(inputs):
+        X_train, X_test = inputs[train_index], inputs[test_index]
+        y_train, y_test = targets[train_index], targets[test_index]
+        acc = classification(X_train, X_test, y_train, y_test,
+                             'SVM-' + dataset_type + '-' + embed + '-' + str(k) + "_t" + str(trait_idx))
+        print(acc)
+        acc_list.append(acc)
+        k += 1
+    total_acc = np.mean(acc_list)
+    print('trait: ', trait_idx)
+    print('total_acc: ', total_acc)
 
-if (write_file):
-    results_file = 'SVM_' + dataset_type + '_' + embed + '_results.txt'
-    file = open(results_file, 'w')
-    file.write('10 fold accs: ' + str(acc_list) + '\n')
-    file.write('total acc: ' + str(total_acc))
-    file.close()
+    if (write_file):
+        results_file = 'SVM_' + dataset_type + '_' + embed + "_t" + str(trait_idx) + '_results.txt'
+        file = open(results_file, 'w')
+        file.write('10 fold accs: ' + str(acc_list) + '\n')
+        file.write('total acc: ' + str(total_acc))
+        file.close()

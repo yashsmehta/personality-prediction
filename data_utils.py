@@ -74,7 +74,7 @@ def essays_embeddings(datafile, tokenizer, token_length):
             print(tokens)
 
         input_ids.append(token_ids)
-        targets.append(df['OPN'][ind])
+        targets.append([df['EXT'][ind], df['NEU'][ind], df['AGR'][ind], df['CON'][ind], df['OPN'][ind]])
 
         cnt += 1
     print('token lengths : ', token_len)
@@ -127,7 +127,7 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
             print(tokens)
 
         input_ids.append(token_ids)
-        targets.append(df['J'][ind])
+        targets.append([df['E'][ind], df['N'][ind], df['F'][ind], df['J'][ind]])  # todo: test it (all traits)
 
         cnt += 1
     print('token lengths : ', token_len)
@@ -173,7 +173,7 @@ def pandora_embeddings(datafile, tokenizer, token_length):
             print(tokens)
 
         input_ids.append(token_ids)
-        targets.append(df.openness[ind])
+        targets.append([df.extraversion[ind], df.neuroticism[ind], df.agreeableness[ind], df.conscientiousness[ind], df.openness[ind]])
 
         cnt += 1
     print('token lengths : ', token_len)
@@ -191,7 +191,11 @@ class MyMapDataset(Dataset):
             input_ids, targets = pandora_embeddings(datafile, tokenizer, token_length)
 
         input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)
-        targets = torch.from_numpy(np.array(targets)).long().to(DEVICE)
+        targets = torch.from_numpy(np.array(targets))
+        if dataset_type == 'pandora':
+            targets = targets.float().to(DEVICE)
+        else:
+            targets = targets.long().to(DEVICE)
 
         self.input_ids = input_ids
         self.targets = targets
