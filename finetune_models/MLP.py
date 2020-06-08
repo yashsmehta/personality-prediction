@@ -28,7 +28,7 @@ elif (embed == 'bert-large'):
     n_hl = 24
     hidden_dim = 1024
 
-file = open(inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
+file = open('../'+inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
 
 data = pickle.load(file)
 data_x, data_y = list(zip(*data))
@@ -58,35 +58,40 @@ full_targets = np.array(targets)
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
     targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
-
     n_data = targets.shape[0]
+    kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    k = -1
+    for train_index, test_index in kf.split(inputs):
+        X_train, X_test = inputs[train_index], inputs[test_index]
+        y_train, y_test = targets[train_index], targets[test_index]
+        k+=1
+        model = tf.keras.models.Sequential()
 
-    model = tf.keras.models.Sequential()
+        # define the neural network architecture
+        if (network == 'fc'):
+            model.add(tf.keras.layers.Dense(500, input_dim=hidden_dim, activation='relu'))
+            model.add(tf.keras.layers.Dense(50, activation='relu'))
+            model.add(tf.keras.layers.Dense(n_classes))
 
-    # define the neural network architecture
-    if (network == 'fc'):
-        model.add(tf.keras.layers.Dense(500, input_dim=hidden_dim, activation='relu'))
-        model.add(tf.keras.layers.Dense(50, activation='relu'))
-        model.add(tf.keras.layers.Dense(n_classes))
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                      metrics=['mse', 'accuracy'])
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-                  loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                  metrics=['mse', 'accuracy'])
+        print(model.summary())
+        validation_split = 0.15
+        history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
+                            validation_split=validation_split, verbose=1)
+        result = model.evaluate(X_test, y_test, batch_size=batch_size)
+        print(result)
+        print('acc: ', history.history['accuracy'])
+        print('val acc: ', history.history['val_accuracy'])
+        print('loss: ', history.history['loss'])
+        print('val loss: ', history.history['val_loss'])
 
-    print(model.summary())
-    validation_split = 0.15
-    history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
-                        validation_split=validation_split, verbose=1)
+        print(timedelta(seconds=int(time.time() - start)), end=' ')
+        # print(model.evaluate(inputs, targets, batch_size=batch_size))
 
-    print('acc: ', history.history['accuracy'])
-    print('val acc: ', history.history['val_accuracy'])
-    print('loss: ', history.history['loss'])
-    print('val loss: ', history.history['val_loss'])
-
-    print(timedelta(seconds=int(time.time() - start)), end=' ')
-    # print(model.evaluate(inputs, targets, batch_size=batch_size))
-
-    if (write_file):
-        results_file = "_t" + str(trait_idx) + 'results.csv'
-        meta_info = (lr, epochs, seed, embed, layer)
-        utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'])
+        if (write_file):
+            results_file = "MLP_t" + str(trait_idx) + '_results.csv'
+            meta_info = (lr, epochs, seed, embed, layer)
+            utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'], result, str(k))

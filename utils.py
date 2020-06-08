@@ -4,15 +4,19 @@ import argparse
 from datetime import datetime, timedelta
 
 
-def file_writer(results_file, meta_info, acc, loss_val):
+def file_writer(results_file, meta_info, acc, loss_val, test_result, cv):
     lr, epochs, seed, embed, layer = meta_info
     params = ["EMBED ", embed, " LAYER ", str(layer), " LR ", str(lr), " SEED ", str(seed), " EPOCHS ", str(epochs)]
 
     with open(results_file, 'a') as csvFile:
         writer = csv.writer(csvFile)
-        writer.writerow(params)
-        writer.writerow(loss_val)
-        writer.writerow(acc)
+        if cv == '0':
+            writer.writerow(params)
+        writer.writerow(['cv', cv])
+        writer.writerow(['loss_val: ', str(loss_val)])
+        writer.writerow(['acc_val: ',str(acc)])
+        writer.writerow(['loss_test: ',test_result[0]])
+        writer.writerow(['acc_test: ',test_result[2]])
         writer.writerow("")
 
         csvFile.flush()
@@ -58,7 +62,7 @@ def parse_args_extractor():
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
     ap.add_argument("-mode", type=str, default='512_tail')
     args = ap.parse_args()
-    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir, args.mode
+    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir
 
 
 def parse_args_metafeatures():

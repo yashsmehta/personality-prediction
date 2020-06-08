@@ -28,7 +28,7 @@ elif (embed == 'bert-large'):
     n_hl = 24
     hidden_dim = 1024
 
-file = open(inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
+file = open('../'+inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
 
 data = pickle.load(file)
 data_x, data_y = list(zip(*data))
@@ -56,18 +56,17 @@ for ii in range(n_batches):
 # inputs = np.array(inputs)
 inputs = np.reshape(inputs, (-1, hidden_dim, 1))
 full_targets = np.array(targets)
+
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
     targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
-
     n_data = targets.shape[0]
     kf = KFold(n_splits=10, shuffle=True, random_state=0)
-    k = 0
-    loss_list = []; acc_list = []; train_acc = []; train_loss = []; val_acc = []; val_loss = []
-
+    k = -1
     for train_index, test_index in kf.split(inputs):
         X_train, X_test = inputs[train_index], inputs[test_index]
         y_train, y_test = targets[train_index], targets[test_index]
+        k+=1
         model = tf.keras.models.Sequential()
         #define the neural network architecture
         if (network == 'fc'):
@@ -88,19 +87,15 @@ for trait_idx in range(full_targets.shape[1]):
                             validation_split=validation_split, verbose = 1)
         result = model.evaluate(X_test, y_test, batch_size=batch_size)
 
-        loss_list.append(result[0]); acc_list.append(result[1])
-        train_acc.append(history.history['accuracy'])
-        train_loss.append(history.history['loss'])
-        val_acc.append(history.history['val_accuracy'])
-        val_loss.append(history.history['val_loss'])
-
-        print('trait: ', trait_idx)
         print('acc: ', history.history['accuracy'])
         print('val acc: ', history.history['val_accuracy'])
         print('loss: ', history.history['loss'])
         print('val loss: ', history.history['val_loss'])
-        print(timedelta(seconds=int(time.time()-start)), end=' ')
 
-    total_acc = np.mean(acc_list)
-    total_loss = np.mean(loss_list)
+        print(timedelta(seconds=int(time.time() - start)), end=' ')
+        # print(model.evaluate(inputs, targets, batch_size=batch_size))
 
+        if (write_file):
+            results_file = "CNN_t" + str(trait_idx) + '_results.csv'
+            meta_info = (lr, epochs, seed, embed, layer)
+            utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'], result, str(k))
