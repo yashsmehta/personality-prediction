@@ -15,7 +15,7 @@ import utils
 
 start = time.time()
 # argument extractor
-dataset_type, token_length, datafile, batch_size, embed, op_dir = utils.parse_args_extractor()
+dataset_type, token_length, datafile, batch_size, embed, op_dir, mode = utils.parse_args_extractor()
 
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
@@ -54,7 +54,7 @@ tokenizer = tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=Tr
 # create a class which can be passed to the pyTorch dataloader. responsible for returning tokenized and encoded values of the Essays dataset
 # this class will have __getitem__(self,idx) function which will return input_ids and target values
 # currently it is just returning the targets for the 'OPN' trait - need to generalize this
-map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE)
+map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE, mode)
 
 data_loader = DataLoader(dataset=map_dataset,
                          batch_size=batch_size,
@@ -70,6 +70,7 @@ if (DEVICE == torch.device("cuda")):
 print('starting to extract LM embeddings...')
 
 hidden_features = []
+hidden_features2 = []
 all_targets = []
 for input_ids, targets in data_loader:
     with torch.no_grad():
@@ -79,15 +80,22 @@ for input_ids, targets in data_loader:
 
         # bert_output[2](this id gives all BERT outputs)[ii+1](which BERT layer)[:,0,:](taking the <CLS> output)
         tmp = []
+        tmp2 = []
         for ii in range(n_hl):
             tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
+            tmp2.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
 
         hidden_features.append(np.array(tmp))
+        hidden_features2.append(np.array(tmp2))
 
 # storing the embeddings into a pickle file
-file = open(op_dir + dataset_type + '-' + embed + '.pkl', 'wb')
+file = open(op_dir + dataset_type + '-' + embed + '-cls-'+mode+'.pkl', 'wb')
 pickle.dump(zip(hidden_features, all_targets), file)
 file.close()
+
+file2 = open(op_dir + dataset_type + '-' + embed + '-mean-'+mode+'.pkl', 'wb')
+pickle.dump(zip(hidden_features2, all_targets), file2)
+file2.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
 print('extracting embeddings for Essays dataset: DONE!')
