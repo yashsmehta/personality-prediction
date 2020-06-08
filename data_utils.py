@@ -19,6 +19,7 @@ def preprocess_text(sentence):
     sentence = re.sub(r'http\S+', ' ', sentence)
     # Remove punctuations and numbers
     sentence = re.sub('[^a-zA-Z]', ' ', sentence)
+    # sentence = re.sub('[^a-zA-Z].?!,', ' ', sentence)
     # Single character removal (except I)
     sentence = re.sub(r"\s+[a-zA-HJ-Z]\s+", ' ', sentence)
     # Removing multiple spaces
@@ -127,7 +128,7 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
             print(tokens)
 
         input_ids.append(token_ids)
-        targets.append([df['E'][ind], df['N'][ind], df['F'][ind], df['J'][ind]])  # todo: test it (all traits)
+        targets.append([df['E'][ind], df['N'][ind], df['F'][ind], df['J'][ind]])
 
         cnt += 1
     print('token lengths : ', token_len)
@@ -137,7 +138,7 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
 
 def load_pandora_df(datafile):
     # load posts_df in a proper [author,100 most recent posts] format
-    posts_df = get_100_recent_posts(datafile + "filtered_reddit_ocean_full.csv")
+    posts_df = get_100_recent_posts(datafile + "all_comments_since_2015.csv")
     # load profiles
     profiles_df = pd.read_csv(datafile + "author_profiles.csv").set_index('author')
     merged_df = posts_df.join(profiles_df)
@@ -152,6 +153,11 @@ def load_pandora_df(datafile):
     print('AGR : ', merged_df.agreeableness.describe())
     print('CON : ', merged_df.conscientiousness.describe())
     print('OPN : ', merged_df.openness.describe())
+
+    print('Introverted : ', merged_df.introverted.value_counts())
+    print('intuitive : ', merged_df.intuitive.value_counts())
+    print('thinking : ', merged_df.thinking.value_counts())
+    print('perceiving : ', merged_df.perceiving.value_counts())
 
     return merged_df
 
@@ -173,7 +179,11 @@ def pandora_embeddings(datafile, tokenizer, token_length):
             print(tokens)
 
         input_ids.append(token_ids)
-        targets.append([df.extraversion[ind], df.neuroticism[ind], df.agreeableness[ind], df.conscientiousness[ind], df.openness[ind]])
+        # We first add OCEAN traits, then MBTI traits
+        targets.append([df.extraversion[ind], df.neuroticism[ind], df.agreeableness[ind], df.conscientiousness[ind],
+                        df.openness[ind],
+                        df.introverted[ind], df.intuitive[ind], df.thinking[ind],
+                        df.perceiving[ind]])
 
         cnt += 1
     print('token lengths : ', token_len)

@@ -28,7 +28,7 @@ def get_100_recent_posts(data_file):
     else:
         print("extracting 100 most recent posts per author")
         multi_core = False
-        reddits = pd.read_csv(data_file).set_index('idx')
+        reddits = pd.read_csv(data_file)
         map_reducer = MapReducer(reddits)
         groups = reddits.groupby("author").groups.items()
         results = []
