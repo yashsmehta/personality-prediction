@@ -11,7 +11,7 @@ from datetime import timedelta
 
 import utils
 
-inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer = utils.parse_args()
+inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 n_classes = 2
 np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)

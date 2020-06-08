@@ -54,7 +54,7 @@ tokenizer = tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=Tr
 # create a class which can be passed to the pyTorch dataloader. responsible for returning tokenized and encoded values of the Essays dataset
 # this class will have __getitem__(self,idx) function which will return input_ids and target values
 # currently it is just returning the targets for the 'OPN' trait - need to generalize this
-map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE)
+map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE, mode)
 
 data_loader = DataLoader(dataset=map_dataset,
                          batch_size=batch_size,

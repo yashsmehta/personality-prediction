@@ -13,18 +13,15 @@ import utils
 
 
 def classification(X_train, X_test, y_train, y_test, file_name):
-    model_name = 'LR-models/'+file_name + '-mean.joblib'
-    if os.path.isfile(model_name):
-        classifier = joblib.load(model_name)
-    else:
-        classifier = LogisticRegression(random_state=0)
-        classifier.fit(X_train, y_train)
-        joblib.dump(classifier, model_name)
+    model_name = 'LR-models/' + file_name + '-mean.joblib'
+    classifier = LogisticRegression(random_state=0)
+    classifier.fit(X_train, y_train)
+    # joblib.dump(classifier, model_name)
     acc = classifier.score(X_test, y_test)
     return acc
 
 
-inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer = utils.parse_args()
+inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 n_classes = 2
 np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)
@@ -36,8 +33,7 @@ if (embed == 'bert-base'):
     n_hl = 12
     hidden_dim = 768
 
-
-file = open('../'+inp_dir + dataset_type + '-' + embed + '-mean.pkl', 'rb')
+file = open('../' + inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
 
 data = pickle.load(file)
 data_x, data_y = list(zip(*data))
@@ -62,13 +58,15 @@ for ii in range(n_batches):
     inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
     targets.extend(data_y[ii])
 
-# if mode == 'docbert':
-#     length_list = open('')
-#     inputs_tmp = []
-#     for length in length_list:
-#         mean_vector = np.mean(inputs[:len])
-#         inputs_tmp.append(mean_vector)
-#     inputs = inputs_tmp
+if mode == 'docbert':
+    length_list = open('../num_sobdocuments_200.txt').read()
+    length_list = length_list[1:-1].split(',')
+    inputs_tmp = []
+    for length in length_list:
+        mean_vector = np.mean(inputs[:int(length)], axis=0)
+        del [inputs[:int(length)]]
+        inputs_tmp.append(mean_vector)
+    inputs = inputs_tmp
 
 inputs = np.array(inputs)
 full_targets = np.array(targets)
@@ -81,7 +79,8 @@ for trait_idx in range(full_targets.shape[1]):
         X_train, X_test = inputs[train_index], inputs[test_index]
         y_train, y_test = targets[train_index], targets[test_index]
         acc = classification(X_train, X_test, y_train, y_test,
-                             'LR-' + dataset_type + '-' + embed + '-' + str(k) + "_t" + str(trait_idx))
+                             'LR-' + dataset_type + '-' + embed + '-' + str(k) + "_t" + str(
+                                 trait_idx) + '-' + embed_mode + '-' + mode)
         print(acc)
         acc_list.append(acc)
         k += 1
@@ -90,7 +89,7 @@ for trait_idx in range(full_targets.shape[1]):
     print('total_acc: ', total_acc)
 
     if (write_file):
-        results_file = 'LR_' + dataset_type + '_' + embed + "_t" + str(trait_idx) + '_results_mean.txt'
+        results_file = 'results/LR_' + dataset_type + '_' + embed + "_t" + str(trait_idx) + '_results'+' - '+embed_mode+' - '+mode+'.txt'
         file = open(results_file, 'w')
         file.write('10 fold accs: ' + str(acc_list) + '\n')
         file.write('total acc: ' + str(total_acc))

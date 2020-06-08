@@ -6,6 +6,7 @@ import preprocessor as p
 from torch.utils.data import DataLoader, Dataset
 import torch
 from transformers import *
+import math
 
 # note: might not be the best preprocessor since it completely removes all punctuations. Since most of the essays are exceeding 512 words, we are currently using this.
 # need to experiment with other ones
@@ -18,8 +19,8 @@ def preprocess_text(sentence):
     # Remove hyperlinks
     sentence = re.sub(r'http\S+', ' ', sentence)
     # Remove punctuations and numbers
-    sentence = re.sub('[^a-zA-Z]', ' ', sentence)
-    # sentence = re.sub('[^a-zA-Z].?!,', ' ', sentence)
+    # sentence = re.sub('[^a-zA-Z]', ' ', sentence)
+    sentence = re.sub('[^a-zA-Z.?!,]', ' ', sentence)
     # Single character removal (except I)
     sentence = re.sub(r"\s+[a-zA-HJ-Z]\s+", ' ', sentence)
     # Removing multiple spaces
@@ -57,7 +58,7 @@ def load_essays_df(datafile):
     return df
 
 
-def essays_embeddings(datafile, tokenizer, token_length):
+def essays_embeddings(datafile, tokenizer, token_length, mode):
     hidden_features = []
     targets = []
     token_len = []
@@ -65,19 +66,38 @@ def essays_embeddings(datafile, tokenizer, token_length):
 
     df = load_essays_df(datafile)
     cnt = 0
+    num_subdocs = []
     for ind in df.index:
-
         text = preprocess_text(df['text'][ind])
         tokens = tokenizer.tokenize(text)
         token_len.append(len(tokens))
-        token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+        if mode == 'normal' or mode == '512_head':
+            token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+        elif mode == '512_tail':
+            token_ids = tokenizer.encode(tokens[-(token_length-2):], add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+        elif mode == '256_head_tail':
+            token_ids = tokenizer.encode(tokens[:(token_length-1)]+tokens[-(token_length-1):], add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+        if mode != 'docbert':
+            input_ids.append(token_ids)
+        elif mode == 'docbert':
+            bound = 200
+            num_pieces = math.ceil(len(tokens) / bound)
+            tokens_list = [tokens[i * bound:(i + 1) * bound] for i in range(num_pieces-1)]
+            tokens_list.append(tokens[-(len(tokens) - (num_pieces-1) * bound):])
+            token_ids = [tokenizer.encode(x, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+                         for x in tokens_list]
+            num_subdocs.append(num_pieces)
+            for subdoc in token_ids:
+                input_ids.append(subdoc)
         if (cnt < 10):
             print(tokens)
-
-        input_ids.append(token_ids)
         targets.append([df['EXT'][ind], df['NEU'][ind], df['AGR'][ind], df['CON'][ind], df['OPN'][ind]])
 
         cnt += 1
+    if mode == 'docbert':
+        file = open('num_sobdocuments_'+str(bound)+'.txt', 'w')
+        file.write(str(num_subdocs))
+        file.close()
     print('token lengths : ', token_len)
     print('average length : ', int(np.mean(token_len)))
     return input_ids, targets

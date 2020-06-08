@@ -14,9 +14,9 @@ def file_writer(results_file, meta_info, acc, loss_val, test_result, cv):
             writer.writerow(params)
         writer.writerow(['cv', cv])
         writer.writerow(['loss_val: ', str(loss_val)])
-        writer.writerow(['acc_val: ',str(acc)])
-        writer.writerow(['loss_test: ',test_result[0]])
-        writer.writerow(['acc_test: ',test_result[2]])
+        writer.writerow(['acc_val: ', str(acc)])
+        writer.writerow(['loss_test: ', test_result[0]])
+        writer.writerow(['acc_test: ', test_result[2]])
         writer.writerow("")
 
         csvFile.flush()
@@ -46,8 +46,11 @@ def parse_args():
     ap.add_argument('-write_file', type=str_to_bool, nargs='?', const=True, default=True)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-layer", type=str, default='11')
+    ap.add_argument("-mode", type=str, default='256_head_tail')
+    ap.add_argument("-embed_mode", type=str, default='mean')
     args = ap.parse_args()
-    return args.inp_dir, args.dataset_type, args.network, args.lr, args.batch_size, args.epochs, args.seed, args.write_file, args.embed, args.layer
+    return args.inp_dir, args.dataset_type, args.network, args.lr, args.batch_size, args.epochs,\
+           args.seed, args.write_file, args.embed, args.layer, args.mode, args.embed_mode
 
 
 def parse_args_extractor():
@@ -60,9 +63,9 @@ def parse_args_extractor():
     ap.add_argument('-batch_size', type=str, default=32)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
-    ap.add_argument("-mode", type=str, default='512_tail')
+    ap.add_argument("-mode", type=str, default='normal')
     args = ap.parse_args()
-    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir
+    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir, args.mode
 
 
 def parse_args_metafeatures():
@@ -73,4 +76,3 @@ def parse_args_metafeatures():
     ap.add_argument("-op_dir", type=str, default='data/')
     args = ap.parse_args()
     return args.dataset_type, args.datafile, args.feature_type, args.op_dir
-
