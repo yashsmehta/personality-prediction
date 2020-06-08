@@ -1,5 +1,6 @@
 torch   #for the LM_extractor
 torchvision
+tweet-preprocessor
 tensorflow=1.15 #for finetuneNet.py
 transformers #HuggingFace library
 numpy 
