@@ -42,19 +42,19 @@ def extract_NRC_features(x, sentic_df, feature_type):
 if __name__ == "__main__":
     count_df = pd.read_pickle(datafile)
     if feature_type == 'hourglass':
-        sentic_path = "meta_features_data/senticnet5_df.p"
+        sentic_path = "data/essays/psycholinguist_features/meta_features_data/senticnet5_df.p"
         sentic_df = pd.read_pickle(sentic_path)
         for col in ['pleasantness_value', 'attention_value', 'sensitivity_value', 'aptitude_value', 'polarity_value']:
             sentic_df[col] = pd.to_numeric(sentic_df[col])
     elif feature_type == 'affectivespace':
-        sentic_path = "meta_features_data/affectivespace.csv"
+        sentic_path = "data/essays/psycholinguist_features/meta_features_data/affectivespace.csv"
         sentic_df = pd.read_csv(sentic_path, header=None)
         sentic_df = sentic_df.set_index(sentic_df.columns[0])
     elif feature_type == 'nrc':
-        NRC_path = "meta_features_data/NRC-Emotion-Lexicon.xlsx"
+        NRC_path = "data/essays/psycholinguist_features/meta_features_data/NRC-Emotion-Lexicon.xlsx"
         NRC_df = pd.read_excel(NRC_path, index_col=0)
     elif feature_type == 'nrc-vad':
-        NRC_path = "meta_features_data/NRC-VAD-Lexicon.txt"
+        NRC_path = "data/essays/psycholinguist_features/meta_features_data/NRC-VAD-Lexicon.txt"
         NRC_df = pd.read_csv(NRC_path, index_col=['Word'], sep='\t')
 
     # tmp = count_df["concept_count"].apply(lambda x: extract_sentic_features(x, sentic_df, feature_type))

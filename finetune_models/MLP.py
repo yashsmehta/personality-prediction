@@ -28,7 +28,7 @@ elif (embed == 'bert-large'):
     n_hl = 24
     hidden_dim = 1024
 
-file = open('../'+inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
+file = open('../'+inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode+ '.pkl', 'rb')
 
 data = pickle.load(file)
 data_x, data_y = list(zip(*data))
