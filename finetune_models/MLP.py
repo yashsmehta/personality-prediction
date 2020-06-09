@@ -5,6 +5,7 @@ import tensorflow as tf
 from sklearn.model_selection import KFold
 import numpy as np
 import csv
+import re
 import pickle
 import time
 from datetime import timedelta
@@ -18,17 +19,15 @@ tf.compat.v1.set_random_seed(seed)
 
 start = time.time()
 
-if (embed == 'bert-base'):
-    pretrained_weights = 'bert-base-uncased'
+if (re.search(r'base', embed)):
     n_hl = 12
     hidden_dim = 768
 
-elif (embed == 'bert-large'):
-    pretrained_weights = 'bert-large-uncased'
+elif (re.search(r'large', embed)):
     n_hl = 24
     hidden_dim = 1024
 
-file = open('../'+inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode+ '.pkl', 'rb')
+file = open(inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
 
 data = pickle.load(file)
 data_x, data_y = list(zip(*data))
@@ -55,6 +54,9 @@ for ii in range(n_batches):
 
 inputs = np.array(inputs)
 full_targets = np.array(targets)
+print(inputs.shape)
+print(full_targets.shape)
+
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
     targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
@@ -69,8 +71,8 @@ for trait_idx in range(full_targets.shape[1]):
 
         # define the neural network architecture
         if (network == 'fc'):
-            model.add(tf.keras.layers.Dense(500, input_dim=hidden_dim, activation='relu'))
-            model.add(tf.keras.layers.Dense(50, activation='relu'))
+            model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
+            # model.add(tf.keras.layers.Dense(50, activation='relu'))
             model.add(tf.keras.layers.Dense(n_classes))
 
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
@@ -78,10 +80,9 @@ for trait_idx in range(full_targets.shape[1]):
                       metrics=['mse', 'accuracy'])
 
         print(model.summary())
-        validation_split = 0.15
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                            validation_split=validation_split, verbose=1)
-        result = model.evaluate(X_test, y_test, batch_size=batch_size)
+                            validation_data=(X_test, y_test), verbose=1)
+
         print(result)
         print('acc: ', history.history['accuracy'])
         print('val acc: ', history.history['val_accuracy'])
@@ -89,7 +90,6 @@ for trait_idx in range(full_targets.shape[1]):
         print('val loss: ', history.history['val_loss'])
 
         print(timedelta(seconds=int(time.time() - start)), end=' ')
-        # print(model.evaluate(inputs, targets, batch_size=batch_size))
 
         if (write_file):
             results_file = "MLP_t" + str(trait_idx) + '_results.csv'
