@@ -80,10 +80,9 @@ for trait_idx in range(full_targets.shape[1]):
                       metrics=['mse', 'accuracy'])
 
         print(model.summary())
-        validation_split = 0.10
-        history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
-                            validation_split=validation_split, verbose=1)
-        result = model.evaluate(X_test, y_test, batch_size=batch_size)
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
+                            validation_data=(X_test, y_test), verbose=1)
+
         print(result)
         print('acc: ', history.history['accuracy'])
         print('val acc: ', history.history['val_accuracy'])
@@ -91,7 +90,6 @@ for trait_idx in range(full_targets.shape[1]):
         print('val loss: ', history.history['val_loss'])
 
         print(timedelta(seconds=int(time.time() - start)), end=' ')
-        # print(model.evaluate(inputs, targets, batch_size=batch_size))
 
         if (write_file):
             results_file = "MLP_t" + str(trait_idx) + '_results.csv'
