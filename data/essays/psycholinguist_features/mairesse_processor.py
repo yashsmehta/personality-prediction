@@ -12,5 +12,5 @@ if __name__ == "__main__":
     labels.remove('T-L-FREQ numeric')
     mairesse.columns = labels
     mairesse = mairesse[mairesse.columns[:-5]]
-    mairesse.to_csv("essays_mairesse_labelled.csv", index=False)
+    mairesse.to_csv("essays_mairesse_labeled.csv", index=False)
     print("done")
