@@ -40,13 +40,13 @@ def parse_args():
     ap.add_argument("-network", type=str, default='fc')
     ap.add_argument("-lr", type=float, default=1e-3)
     ap.add_argument("-batch_size", type=int, default=32)
-    ap.add_argument("-epochs", type=int, default=4)
+    ap.add_argument("-epochs", type=int, default=30)
     # ap.add_argument("-seed", type=int, default=np.random.randint(0,1000))
     ap.add_argument("-seed", type=int, default=0)
     ap.add_argument('-write_file', type=str_to_bool, nargs='?', const=True, default=True)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-layer", type=str, default='11')
-    ap.add_argument("-mode", type=str, default='docbert')
+    ap.add_argument("-mode", type=str, default='256_head_tail')
     ap.add_argument("-embed_mode", type=str, default='mean')
     args = ap.parse_args()
     return args.inp_dir, args.dataset_type, args.network, args.lr, args.batch_size, args.epochs,\
@@ -63,7 +63,7 @@ def parse_args_extractor():
     ap.add_argument('-batch_size', type=str, default=32)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
-    ap.add_argument("-mode", type=str, default='docbert')
+    ap.add_argument("-mode", type=str, default='256_head_tail')
     args = ap.parse_args()
     return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir, args.mode
 
@@ -71,8 +71,18 @@ def parse_args_extractor():
 def parse_args_metafeatures():
     ap = argparse.ArgumentParser()
     ap.add_argument("-dataset_type", type=str, default='essays')
-    ap.add_argument("-datafile", type=str, default='meta_features_data/essays_concept_count_final.p')
-    ap.add_argument("-feature_type", type=str, default='hourglass')
-    ap.add_argument("-op_dir", type=str, default='data/')
+    ap.add_argument("-datafile", type=str, default='data/essays/psycholinguist_features/meta_features_data/essays_concept_count_final.p')
+    ap.add_argument("-feature_type", type=str, default='nrc-vad')
+    ap.add_argument("-op_dir", type=str, default='data/essays/psycholinguist_features/')
     args = ap.parse_args()
     return args.dataset_type, args.datafile, args.feature_type, args.op_dir
+
+def parse_args_SHAP():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-mairesse", type=bool, default=0)
+    ap.add_argument("-nrc", type=bool, default=0)
+    ap.add_argument("-nrc_vad", type=bool, default=0)
+    ap.add_argument("-affectivespace", type=bool, default=0)
+    ap.add_argument("-hourglass", type=bool, default=1)
+    args = ap.parse_args()
+    return args.mairesse, args.nrc, args.nrc_vad, args.affectivespace, args.hourglass

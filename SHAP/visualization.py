@@ -1,30 +1,24 @@
 import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
-from sklearn.model_selection import KFold
 import numpy as np
 import csv
 import pickle
 import time
-from datetime import timedelta
-import shap
 import pandas as pd
-
 import utils
-
-inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
-n_classes = 2
-np.random.seed(seed)
-tf.compat.v1.set_random_seed(seed)
-
-start = time.time()
-from sklearn.preprocessing import MultiLabelBinarizer
 import tensorflow as tf
 from tensorflow.keras.preprocessing import text
 import shap
 import re
 import preprocessor as p
+
+inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
+mairesse, nrc, nrc_vad, affectivespace, hourglass = utils.parse_args_SHAP()
+n_classes = 2
+np.random.seed(seed)
+tf.compat.v1.set_random_seed(seed)
+start = time.time()
 
 def sentence_preprocess(sentence):
     sentence = p.clean(sentence)
@@ -38,6 +32,18 @@ def sentence_preprocess(sentence):
     # Removing multiple spaces
     sentence = re.sub(r'\s+', ' ', sentence)
     return sentence
+
+def load_features(dir):
+    mairesse = pd.read_csv(dir + 'mairesse.csv', header=None)
+    mairesse = mairesse.set_index(mairesse.columns[0])
+    nrc = pd.read_csv(dir + 'essays_nrc.csv').set_index(['#AUTHID'])
+    nrc_vad = pd.read_csv(dir + 'essays_nrc-vad.csv').set_index(['#AUTHID'])
+    affectivespace = pd.read_csv(dir + 'essays_affectivespace.csv').set_index(['#AUTHID'])
+    hourglass = pd.read_csv(dir + 'essays_hourglass.csv').set_index(['#AUTHID'])
+
+    return [mairesse, nrc, nrc_vad, affectivespace, hourglass]
+
+
 def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
         csvreader = csv.reader(csvf, delimiter=',', quotechar='"')
@@ -51,7 +57,7 @@ def load_essays_df(datafile):
             text = line[1]
             text = sentence_preprocess(text)
 
-            df = df.append({#"user": line[0],
+            df = df.append({"user": line[0],
                             "text": text,
                             "EXT": 1 if line[2].lower() == 'y' else 0,
                             "NEU": 1 if line[3].lower() == 'y' else 0,
@@ -71,20 +77,16 @@ class TextPreprocessor(object):
         tokenizer.fit_on_texts(text_list)
         self._tokenizer = tokenizer
 
-if __name__ == "__main__":
-    dump_data = load_essays_df('data/essays/essays.csv')
-    labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
+def get_bert_data():
     if (embed == 'bert-base'):
         pretrained_weights = 'bert-base-uncased'
         n_hl = 12
         hidden_dim = 768
-
     elif (embed == 'bert-large'):
         pretrained_weights = 'bert-large-uncased'
         n_hl = 24
         hidden_dim = 1024
-
-    file = open('../'+inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode+ '.pkl', 'rb')
+    file = open('../' + inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
     data = pickle.load(file)
     data_x, data_y = list(zip(*data))
 
@@ -94,20 +96,38 @@ if __name__ == "__main__":
     else:
         alphaW = np.zeros([n_hl])
         alphaW[int(layer) - 1] = 1
-
-    # just changing the way data is stored (tuples of minibatches) and getting the output for the required layer of BERT using alphaW
-    # data_x[ii].shape = (12, batch_size, 768)
     inputs = []
     targets = []
-
-    n_batches = len(data_y)
-
-    for ii in range(n_batches):
+    for ii in range(len(data_y)):
         inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
         targets.extend(data_y[ii])
 
-    data = np.array(inputs)
-    full_targets = np.array(targets)
+    return np.array(inputs), np.array(targets)
+
+def get_psycholinguist_data(dump_data):
+    features = load_features('../data/essays/psycholinguist_features/')
+    feature_flags = [mairesse, nrc, nrc_vad, affectivespace, hourglass]
+    first = 1
+    for feature, feature_flag in zip(features, feature_flags):
+        if feature_flag:
+            if first:
+                df = feature
+                first = 0
+            else:
+                df = pd.merge(df, feature, left_index=True, right_index=True)
+    labels = dump_data[['user', 'EXT', 'NEU', 'AGR', 'CON', 'OPN']]
+    labels = labels.set_index('user')
+    merged = pd.merge(df, labels, left_index=True, right_index=True).fillna(0)
+    data = merged[merged.columns[:-5]].values
+    full_targets = merged[merged.columns[-5:]].values
+    feature_names = merged.columns
+    return data, full_targets, feature_names
+
+if __name__ == "__main__":
+    dump_data = load_essays_df('../data/essays/essays.csv')
+    labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
+    data, full_targets, feature_names = get_psycholinguist_data(dump_data)
+    # data, full_targets = get_bert_data()
     VOCAB_SIZE = 2000
     train_size = int(len(data) * .8)
     X_train = data[: train_size]
@@ -124,16 +144,15 @@ if __name__ == "__main__":
         y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
 
         model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(50, input_shape = (hidden_dim,), activation='relu'))
-        model.add(tf.keras.layers.Dense(2, activation='sigmoid'))
+        model.add(tf.keras.layers.Dense(50, input_shape = (data.shape[-1],), activation='relu'))
+        model.add(tf.keras.layers.Dense(2, activation='softmax'))
         model.compile(loss = 'binary_crossentropy', optimizer='adam', metrics = ['accuracy'])
         model.fit(X_train, y_train, epochs = epochs, batch_size=batch_size, validation_split=0.1)
         print('Eval loss/accuracy:{}'.format(model.evaluate(X_test, y_test, batch_size = batch_size)))
 
         attrib_data = X_train
         explainer = shap.DeepExplainer(model, attrib_data)
-        num_explanations = 20
-        shap_vals = explainer.shap_values(X_test[:num_explanations])
+        shap_vals = explainer.shap_values(X_test)
 
         words = processor._tokenizer.word_index
         word_lookup = list()
@@ -141,7 +160,9 @@ if __name__ == "__main__":
           word_lookup.append(i)
 
         word_lookup = [''] + word_lookup
-        shap.summary_plot(shap_vals, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
+        # shap.summary_plot(shap_vals, feature_names=feature_names, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
+        shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
         import matplotlib.pyplot as plt
         plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
+        # plt.savefig(labels_list[trait_idx]+"-hourglass.png")
         plt.clf()
