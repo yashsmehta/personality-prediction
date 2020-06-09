@@ -141,7 +141,7 @@ if __name__ == "__main__":
           word_lookup.append(i)
 
         word_lookup = [''] + word_lookup
-        shap.summary_plot(shap_vals, feature_names=word_lookup, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
+        shap.summary_plot(shap_vals, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
         import matplotlib.pyplot as plt
         plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
         plt.clf()
