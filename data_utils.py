@@ -212,9 +212,9 @@ def pandora_embeddings(datafile, tokenizer, token_length):
 
 
 class MyMapDataset(Dataset):
-    def __init__(self, dataset_type, datafile, tokenizer, token_length, DEVICE):
+    def __init__(self, dataset_type, datafile, tokenizer, token_length, DEVICE, mode):
         if dataset_type == 'essays':
-            input_ids, targets = essays_embeddings(datafile, tokenizer, token_length)
+            input_ids, targets = essays_embeddings(datafile, tokenizer, token_length, mode)
         elif dataset_type == 'kaggle':
             input_ids, targets = kaggle_embeddings(datafile, tokenizer, token_length)
         elif dataset_type == 'pandora':
