@@ -70,21 +70,9 @@ class TextPreprocessor(object):
         tokenizer = text.Tokenizer(num_words = self._vocab_size)
         tokenizer.fit_on_texts(text_list)
         self._tokenizer = tokenizer
-    def transform_text(self, text_list):
-        text_matrix = self._tokenizer.texts_to_matrix(text_list)
-        return text_matrix
 
 if __name__ == "__main__":
     dump_data = load_essays_df('data/essays/essays.csv')
-    # train_size = int(len(data) * .8)
-    # VOCAB_SIZE = 2000
-    # train_post = data['text'].values[: train_size]
-    # test_post = data['text'].values[train_size: ]
-    #
-    # processor = TextPreprocessor(VOCAB_SIZE)
-    # processor.create_tokenizer(train_post)
-    # X_train = processor.transform_text(train_post)
-    # X_test = processor.transform_text(test_post)
     labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
     if (embed == 'bert-base'):
         pretrained_weights = 'bert-base-uncased'
@@ -128,13 +116,10 @@ if __name__ == "__main__":
     test_post = dump_data['text'].values[train_size: ]
     processor = TextPreprocessor(VOCAB_SIZE)
     processor.create_tokenizer(train_post)
-    # for trait in labels_list:
     for trait_idx in range(full_targets.shape[1]):
         targets = full_targets[:, trait_idx]
         y_train = targets[: train_size]
         y_test = targets[train_size: ]
-        # y_train = data[trait].values[: train_size]
-        # y_test = data[trait].values[train_size: ]
         y_train = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
         y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
 
@@ -156,7 +141,7 @@ if __name__ == "__main__":
           word_lookup.append(i)
 
         word_lookup = [''] + word_lookup
-        shap.summary_plot(shap_vals, feature_names=word_lookup, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
+        shap.summary_plot(shap_vals, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
         import matplotlib.pyplot as plt
         plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
         plt.clf()
