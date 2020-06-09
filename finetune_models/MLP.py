@@ -79,7 +79,7 @@ for trait_idx in range(full_targets.shape[1]):
 
         print(model.summary())
         validation_split = 0.15
-        history = model.fit(inputs, targets, epochs=epochs, batch_size=batch_size,
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
                             validation_split=validation_split, verbose=1)
         result = model.evaluate(X_test, y_test, batch_size=batch_size)
         print(result)
