@@ -8,13 +8,10 @@ import time
 import pandas as pd
 import utils
 import tensorflow as tf
-from tensorflow.keras.preprocessing import text
 import shap
 import re
 import preprocessor as p
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-from PIL import Image
+from sklearn.model_selection import KFold
 
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
@@ -69,7 +66,6 @@ def load_essays_df(datafile):
                             "AGR": 1 if line[4].lower() == 'y' else 0,
                             "CON": 1 if line[5].lower() == 'y' else 0,
                             "OPN": 1 if line[6].lower() == 'y' else 0}, ignore_index=True)
-    df = df.sample(frac=1)
     return df
 
 
@@ -89,44 +85,8 @@ def get_psycholinguist_data(dump_data):
     merged = pd.merge(df, labels, left_index=True, right_index=True).fillna(0)
     data = merged[merged.columns[:-5]].values
     full_targets = merged[merged.columns[-5:]].values
-    feature_names = list(merged.columns)[:-5]
-    # for f in range(79):
-    #     feature_names[f] = ' '.join(feature_names[f].split()[:-1])
+    feature_names = merged.columns
     return data, full_targets, feature_names
-
-
-def visualize(shap_vals, feature_names):
-    vals = np.abs(shap_vals).mean(0)
-    feature_importance = pd.DataFrame(list(zip(feature_names, sum(vals))),
-                                      columns=['col_name', 'feature_importance_vals'])
-    feature_importance.sort_values(by=['feature_importance_vals'], ascending=False, inplace=True)
-    most_important = feature_importance['col_name'][:3].tolist()
-    feature_importance = feature_importance.set_index(['col_name'])
-    feature_importance_dict = feature_importance.to_dict()['feature_importance_vals']
-
-    mask = np.array(Image.open('img.png'))
-    wordcloud = WordCloud(width=1000, height=1000,
-                          background_color='white',
-                          mask=mask,
-                          # min_font_size=10,
-                          max_font_size=300,
-                          max_words=128).generate_from_frequencies(feature_importance_dict)
-
-    plt.figure(figsize=(8, 6), facecolor=None)
-    plt.imshow(wordcloud)
-    plt.axis("off")
-    plt.tight_layout(pad=0)
-    # plt.show()
-    # wordcloud.to_file(labels_list[trait_idx] + "_wordcloud.png")
-    plt.clf()
-
-    # shap.summary_plot(shap_vals, feature_names=feature_names,
-    #                   class_names=[labels_list[trait_idx] + ' 0', labels_list[trait_idx] + ' 1'])
-    shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
-    plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
-    plt.clf()
-    return wordcloud, most_important
-
 
 if __name__ == "__main__":
     dump_data = load_essays_df('../data/essays/essays.csv')
@@ -135,46 +95,28 @@ if __name__ == "__main__":
     # data, full_targets = get_bert_data()
     VOCAB_SIZE = 2000
     train_size = int(len(data) * .8)
-    X_train = data[: train_size]
-    X_test = data[train_size:]
-    cloud_list = []
-    MI_features = {}
+    file = open('MLP_other_features_results.txt', 'a')
     for trait_idx in range(full_targets.shape[1]):
         targets = full_targets[:, trait_idx]
-        y_train = targets[: train_size]
-        y_test = targets[train_size:]
-        y_train = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
-        y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
+        targets = tf.keras.utils.to_categorical(targets, num_classes=n_classes)
 
-        model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(128, input_shape=(data.shape[-1],), activation='relu'))
-        model.add(tf.keras.layers.Dense(50, activation='relu'))
-        model.add(tf.keras.layers.Dense(2, activation='softmax'))
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-        saver = tf.keras.callbacks.ModelCheckpoint('model' + str(trait_idx) + ".hdf5", save_best_only=True)
-        model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, callbacks=[saver])
-        result = model.evaluate(X_test, y_test, batch_size=batch_size)
-        print('Eval loss/accuracy:{}'.format(result))
-        # file = open('results.txt', 'a')
-        # file.write(str(trait_idx)+ ' : '+str(result)+'\n')
-        # file.close()
-        attrib_data = X_train
-        explainer = shap.DeepExplainer(model, attrib_data)
-        shap_vals = explainer.shap_values(X_test)
-        cloud, MI_features_3 = visualize(shap_vals, feature_names)
-        cloud_list.append(cloud)
-        MI_features[labels_list[trait_idx]] = MI_features_3
+        kf = KFold(n_splits=10, shuffle=True, random_state=0)
+        k = -1
+        sum_res = 0
+        for train_index, test_index in kf.split(data):
+            X_train, X_test = data[train_index], data[test_index]
+            y_train, y_test = targets[train_index], targets[test_index]
+            model = tf.keras.models.Sequential()
+            model.add(tf.keras.layers.Dense(128, input_shape=(data.shape[-1],), activation='relu'))
+            model.add(tf.keras.layers.Dense(50, activation='relu'))
+            model.add(tf.keras.layers.Dense(2, activation='softmax'))
+            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+            saver = tf.keras.callbacks.ModelCheckpoint('model'+str(trait_idx)+".hdf5",save_best_only=True)
+            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, callbacks=[saver])
+            results = model.evaluate(X_test, y_test, batch_size=batch_size)
+            print('Eval loss/accuracy:{}'.format(results))
+            sum_res += results[1]
+        file.write(str(trait_idx) +' : '+ str(sum_res/10)+'\n')
+    file.write('\n')
+    file.close()
 
-
-    plt.figure(figsize=(15,4))
-    for i in range(5):
-        ax= plt.subplot(1,5,i+1)
-        im=ax.imshow(cloud_list[i])
-        plt.tight_layout()
-        plt.title(labels_list[i])
-        plt.subplots_adjust(wspace=0.1)
-        plt.axis("off")
-    plt.show()
-    print(MI_features)
-
-    print('tammat')
