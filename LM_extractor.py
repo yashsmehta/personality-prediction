@@ -15,7 +15,7 @@ from utils.data_utils import MyMapDataset
 
 start = time.time()
 # argument extractor
-dataset_type, token_length, datafile, batch_size, embed, op_dir, mode = utils.parse_args_extractor()
+dataset_type, token_length, datafile, batch_size, embed, op_dir, mode, embed_mode = utils.parse_args_extractor()
 
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
@@ -80,29 +80,22 @@ for input_ids, targets in data_loader:
 
         # bert_output[2](this id gives all BERT outputs)[ii+1](which BERT layer)[:,0,:](taking the <CLS> output)
         tmp = []
-        tmp2 = []
+    
         for ii in range(n_hl):
-            tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
-            tmp2.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
+            if(embed_mode == 'cls')
+                tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
+            elif(embed_mode == 'mean')
+                tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
 
         hidden_features.append(np.array(tmp))
-        hidden_features2.append(np.array(tmp2))
 
 # storing the embeddings into a pickle file
 
-if(mode != None):
-    file = open(op_dir + dataset_type + '-' + embed + '-cls-' + mode + '.pkl', 'wb')
-    pickle.dump(zip(hidden_features, all_targets), file)
-    file.close()
 
-    file2 = open(op_dir + dataset_type + '-' + embed + '-mean-' + mode + '.pkl', 'wb')
-    pickle.dump(zip(hidden_features2, all_targets), file2)
-    file2.close()
+file = open(op_dir + dataset_type + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
+pickle.dump(zip(hidden_features, all_targets), file)
+file.close()
 
-else:
-    file = open(op_dir + dataset_type + '-' + embed + '.pkl', 'wb')
-    pickle.dump(zip(hidden_features2, all_targets), file)
-    file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
 print('extracting embeddings for Essays dataset: DONE!')

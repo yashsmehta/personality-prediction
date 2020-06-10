@@ -13,6 +13,7 @@ from datetime import timedelta
 import utils.gen_utils as utils
 
 inp_dir, dataset_type, _, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
+print('{} : {} : {} : {} : {}'.format(dataset_type, embed, layer, mode, embed_mode))
 n_classes = 2
 np.random.seed(seed)
 tf.random.set_seed(seed)
@@ -84,7 +85,7 @@ for trait_idx in range(full_targets.shape[1]):
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
                             validation_data=(X_test, y_test), verbose=0)
         
-        print('trait : ', trait_labels[trait_idx])
+        print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
         
         # print('\nacc: ', history.history['accuracy'])
         # print('val acc: ', history.history['val_accuracy'])

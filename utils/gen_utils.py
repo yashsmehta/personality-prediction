@@ -64,8 +64,9 @@ def parse_args_extractor():
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-op_dir", type=str, default='pkl_data/')
     ap.add_argument("-mode", type=str, default='256_head_tail')
+    ap.add_argument("-embed_mode", type=str, default='cls')
     args = ap.parse_args()
-    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir, args.mode
+    return args.dataset_type, args.token_length, args.datafile, args.batch_size, args.embed, args.op_dir, args.mode, args.embed_mode
 
 
 def parse_args_metafeatures():
