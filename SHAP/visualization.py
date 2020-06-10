@@ -12,6 +12,7 @@ from tensorflow.keras.preprocessing import text
 import shap
 import re
 import preprocessor as p
+import matplotlib.pyplot as plt
 
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
@@ -19,6 +20,7 @@ n_classes = 2
 np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)
 start = time.time()
+
 
 def sentence_preprocess(sentence):
     sentence = p.clean(sentence)
@@ -33,6 +35,7 @@ def sentence_preprocess(sentence):
     sentence = re.sub(r'\s+', ' ', sentence)
     return sentence
 
+
 def load_features(dir):
     mairesse = pd.read_csv(dir + 'essays_mairesse_labeled.csv')
     mairesse = mairesse.set_index(mairesse.columns[0])
@@ -43,6 +46,7 @@ def load_features(dir):
     readability = pd.read_csv(dir + 'essays_readability.csv').set_index(['#AUTHID'])
 
     return [mairesse, nrc, nrc_vad, affectivespace, hourglass, readability]
+
 
 def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
@@ -65,6 +69,7 @@ def load_essays_df(datafile):
                             "OPN": 1 if line[6].lower() == 'y' else 0}, ignore_index=True)
     return df
 
+
 def get_psycholinguist_data(dump_data):
     features = load_features('../data/essays/psycholinguist_features/')
     feature_flags = [mairesse, nrc, nrc_vad, affectivespace, hourglass, readability]
@@ -84,6 +89,7 @@ def get_psycholinguist_data(dump_data):
     feature_names = merged.columns
     return data, full_targets, feature_names
 
+
 if __name__ == "__main__":
     dump_data = load_essays_df('../data/essays/essays.csv')
     labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
@@ -92,28 +98,27 @@ if __name__ == "__main__":
     VOCAB_SIZE = 2000
     train_size = int(len(data) * .8)
     X_train = data[: train_size]
-    X_test = data[train_size: ]
+    X_test = data[train_size:]
     for trait_idx in range(full_targets.shape[1]):
         targets = full_targets[:, trait_idx]
         y_train = targets[: train_size]
-        y_test = targets[train_size: ]
+        y_test = targets[train_size:]
         y_train = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
         y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
 
         model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(50, input_shape = (data.shape[-1],), activation='relu'))
+        model.add(tf.keras.layers.Dense(50, input_shape=(data.shape[-1],), activation='relu'))
         model.add(tf.keras.layers.Dense(2, activation='softmax'))
-        model.compile(loss = 'binary_crossentropy', optimizer='adam', metrics = ['accuracy'])
-        model.fit(X_train, y_train, epochs = epochs, batch_size=batch_size, validation_split=0.1)
-        print('Eval loss/accuracy:{}'.format(model.evaluate(X_test, y_test, batch_size = batch_size)))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1)
+        print('Eval loss/accuracy:{}'.format(model.evaluate(X_test, y_test, batch_size=batch_size)))
 
         attrib_data = X_train
         explainer = shap.DeepExplainer(model, attrib_data)
         shap_vals = explainer.shap_values(X_test)
 
-        shap.summary_plot(shap_vals, feature_names=feature_names, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
+        shap.summary_plot(shap_vals, feature_names=feature_names,
+                          class_names=[labels_list[trait_idx] + ' 0', labels_list[trait_idx] + ' 1'])
         # shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
-        # import matplotlib.pyplot as plt
         # plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
-        # # plt.savefig(labels_list[trait_idx]+"-hourglass.png")
         # plt.clf()
