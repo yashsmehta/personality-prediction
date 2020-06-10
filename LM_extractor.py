@@ -76,17 +76,24 @@ for input_ids, targets in data_loader:
     with torch.no_grad():
         all_targets.append(targets.cpu().numpy())
         # get the LM embeddings
-        bert_output = model(input_ids)
+        if (mode == 'docbert'):
+            print(len(input_ids))
+            break
+
+            # for ii in range(len(input_ids)):
+            
+        else:
+            bert_output = model(input_ids)
 
         # bert_output[2](this id gives all BERT outputs)[ii+1](which BERT layer)[:,0,:](taking the <CLS> output)
         tmp = []
     
         for ii in range(n_hl):
-            if(embed_mode == 'cls')
+            if(embed_mode == 'cls'):
                 tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
-            elif(embed_mode == 'mean')
+            elif(embed_mode == 'mean'):
                 tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
-
+            
         hidden_features.append(np.array(tmp))
 
 # storing the embeddings into a pickle file

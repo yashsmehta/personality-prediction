@@ -10,7 +10,7 @@ import math
 
 # note: might not be the best preprocessor since it completely removes all punctuations. Since most of the essays are exceeding 512 words, we are currently using this.
 # need to experiment with other ones
-from data.pandora.author_100recent import get_100_recent_posts
+from utils.author_100recent import get_100_recent_posts
 
 
 def preprocess_text(sentence):
@@ -80,7 +80,7 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
         if mode != 'docbert':
             input_ids.append(token_ids)
         elif mode == 'docbert':
-            bound = 200
+            bound = 512
             num_pieces = math.ceil(len(tokens) / bound)
             tokens_list = [tokens[i * bound:(i + 1) * bound] for i in range(num_pieces-1)]
             tokens_list.append(tokens[-(len(tokens) - (num_pieces-1) * bound):])
