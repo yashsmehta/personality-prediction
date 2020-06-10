@@ -71,11 +71,11 @@ def parse_args_extractor():
 def parse_args_metafeatures():
     ap = argparse.ArgumentParser()
     ap.add_argument("-dataset_type", type=str, default='essays')
-    ap.add_argument("-datafile", type=str, default='data/essays/psycholinguist_features/meta_features_data/essays_concept_count_final.p')
-    ap.add_argument("-feature_type", type=str, default='nrc-vad')
-    ap.add_argument("-op_dir", type=str, default='data/essays/psycholinguist_features/')
+    ap.add_argument("-datafile", type=str, default='meta_features_data/essays_concept_count_final.p')
+    # ap.add_argument("-feature_type", type=str, default='readability')
+    ap.add_argument("-op_dir", type=str, default='../data/essays/psycholinguist_features/')
     args = ap.parse_args()
-    return args.dataset_type, args.datafile, args.feature_type, args.op_dir
+    return args.dataset_type, args.datafile, args.op_dir
 
 def parse_args_SHAP():
     ap = argparse.ArgumentParser()
