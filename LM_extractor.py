@@ -10,8 +10,8 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from transformers import *
 
-from data_utils import MyMapDataset
-import utils
+import utils.gen_utils as utils
+from utils.data_utils import MyMapDataset
 
 start = time.time()
 # argument extractor
@@ -89,13 +89,20 @@ for input_ids, targets in data_loader:
         hidden_features2.append(np.array(tmp2))
 
 # storing the embeddings into a pickle file
-file = open(op_dir + dataset_type + '-' + embed + '-cls-' + mode + '.pkl', 'wb')
-pickle.dump(zip(hidden_features, all_targets), file)
-file.close()
 
-file2 = open(op_dir + dataset_type + '-' + embed + '-mean-' + mode + '.pkl', 'wb')
-pickle.dump(zip(hidden_features2, all_targets), file2)
-file2.close()
+if(mode != None):
+    file = open(op_dir + dataset_type + '-' + embed + '-cls-' + mode + '.pkl', 'wb')
+    pickle.dump(zip(hidden_features, all_targets), file)
+    file.close()
+
+    file2 = open(op_dir + dataset_type + '-' + embed + '-mean-' + mode + '.pkl', 'wb')
+    pickle.dump(zip(hidden_features2, all_targets), file2)
+    file2.close()
+
+else:
+    file = open(op_dir + dataset_type + '-' + embed + '.pkl', 'wb')
+    pickle.dump(zip(hidden_features2, all_targets), file)
+    file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
 print('extracting embeddings for Essays dataset: DONE!')

@@ -10,9 +10,9 @@ import pickle
 import time
 from datetime import timedelta
 
-import utils
+import utils.gen_utils as utils
 
-inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
+inp_dir, dataset_type, _, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 n_classes = 2
 np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)
@@ -27,7 +27,7 @@ elif (re.search(r'large', embed)):
     n_hl = 24
     hidden_dim = 1024
 
-file = open(inp_dir + dataset_type + '-' + embed + '.pkl', 'rb')
+file = open(inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
 
 data = pickle.load(file)
 data_x, data_y = list(zip(*data))
@@ -57,11 +57,13 @@ full_targets = np.array(targets)
 print(inputs.shape)
 print(full_targets.shape)
 
+trait_labels = ['EXT','NEU','AGR','CON','OPN']
+
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
     targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
     n_data = targets.shape[0]
-    kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    kf = KFold(n_splits=5, shuffle=True, random_state=0)
     k = -1
     for train_index, test_index in kf.split(inputs):
         X_train, X_test = inputs[train_index], inputs[test_index]
@@ -70,10 +72,9 @@ for trait_idx in range(full_targets.shape[1]):
         model = tf.keras.models.Sequential()
 
         # define the neural network architecture
-        if (network == 'fc'):
-            model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
-            # model.add(tf.keras.layers.Dense(50, activation='relu'))
-            model.add(tf.keras.layers.Dense(n_classes))
+        model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
+        # model.add(tf.keras.layers.Dense(50, activation='relu'))
+        model.add(tf.keras.layers.Dense(n_classes))
 
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
                       loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
@@ -83,7 +84,7 @@ for trait_idx in range(full_targets.shape[1]):
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
                             validation_data=(X_test, y_test), verbose=1)
 
-        print(result)
+        print('trait : ', trait_labels[trait_idx])
         print('acc: ', history.history['accuracy'])
         print('val acc: ', history.history['val_accuracy'])
         print('loss: ', history.history['loss'])

@@ -9,7 +9,7 @@ import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 
-import utils
+import utils.gen_utils as utils
 
 
 def classification(X_train, X_test, y_train, y_test, file_name):

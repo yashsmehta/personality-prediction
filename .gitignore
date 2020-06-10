@@ -1,5 +1,7 @@
 .vscode/
 pkl_data/
 __pycache__/
-*.out
+logs/
+data/kaggle
+data/pandora
 submit_job.sbatch

@@ -38,7 +38,7 @@ def parse_args():
     ap.add_argument("-inp_dir", type=str, default='pkl_data/')
     ap.add_argument("-dataset_type", type=str, default='essays')
     ap.add_argument("-network", type=str, default='fc')
-    ap.add_argument("-lr", type=float, default=1e-3)
+    ap.add_argument("-lr", type=float, default=5e-4)
     ap.add_argument("-batch_size", type=int, default=32)
     ap.add_argument("-epochs", type=int, default=30)
     # ap.add_argument("-seed", type=int, default=np.random.randint(0,1000))
@@ -46,8 +46,8 @@ def parse_args():
     ap.add_argument('-write_file', type=str_to_bool, nargs='?', const=True, default=True)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-layer", type=str, default='11')
-    ap.add_argument("-mode", type=str, default='256_head_tail')
-    ap.add_argument("-embed_mode", type=str, default='mean')
+    ap.add_argument("-mode", type=str, default=None)
+    ap.add_argument("-embed_mode", type=str, default=None)
     args = ap.parse_args()
     return args.inp_dir, args.dataset_type, args.network, args.lr, args.batch_size, args.epochs,\
            args.seed, args.write_file, args.embed, args.layer, args.mode, args.embed_mode

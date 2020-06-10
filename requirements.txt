@@ -4,5 +4,6 @@ tweet-preprocessor
 tensorflow=1.15 #for finetuneNet.py
 transformers #HuggingFace library
 numpy 
+readability
 pandas
 tensorflow
