@@ -79,10 +79,11 @@ def parse_args_metafeatures():
 
 def parse_args_SHAP():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-mairesse", type=bool, default=0)
-    ap.add_argument("-nrc", type=bool, default=0)
-    ap.add_argument("-nrc_vad", type=bool, default=0)
-    ap.add_argument("-affectivespace", type=bool, default=0)
+    ap.add_argument("-mairesse", type=bool, default=1)
+    ap.add_argument("-nrc", type=bool, default=1)
+    ap.add_argument("-nrc_vad", type=bool, default=1)
+    ap.add_argument("-affectivespace", type=bool, default=1)
     ap.add_argument("-hourglass", type=bool, default=1)
+    ap.add_argument("-readability", type=bool, default=1)
     args = ap.parse_args()
-    return args.mairesse, args.nrc, args.nrc_vad, args.affectivespace, args.hourglass
+    return args.mairesse, args.nrc, args.nrc_vad, args.affectivespace, args.hourglass, args.readability

@@ -14,7 +14,7 @@ import re
 import preprocessor as p
 
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
-mairesse, nrc, nrc_vad, affectivespace, hourglass = utils.parse_args_SHAP()
+mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
 n_classes = 2
 np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)
@@ -34,15 +34,15 @@ def sentence_preprocess(sentence):
     return sentence
 
 def load_features(dir):
-    mairesse = pd.read_csv(dir + 'mairesse.csv', header=None)
+    mairesse = pd.read_csv(dir + 'essays_mairesse_labeled.csv')
     mairesse = mairesse.set_index(mairesse.columns[0])
     nrc = pd.read_csv(dir + 'essays_nrc.csv').set_index(['#AUTHID'])
     nrc_vad = pd.read_csv(dir + 'essays_nrc-vad.csv').set_index(['#AUTHID'])
     affectivespace = pd.read_csv(dir + 'essays_affectivespace.csv').set_index(['#AUTHID'])
     hourglass = pd.read_csv(dir + 'essays_hourglass.csv').set_index(['#AUTHID'])
+    readability = pd.read_csv(dir + 'essays_readability.csv').set_index(['#AUTHID'])
 
-    return [mairesse, nrc, nrc_vad, affectivespace, hourglass]
-
+    return [mairesse, nrc, nrc_vad, affectivespace, hourglass, readability]
 
 def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
@@ -53,7 +53,6 @@ def load_essays_df(datafile):
             if first_line:
                 first_line = False
                 continue
-
             text = line[1]
             text = sentence_preprocess(text)
 
@@ -64,49 +63,11 @@ def load_essays_df(datafile):
                             "AGR": 1 if line[4].lower() == 'y' else 0,
                             "CON": 1 if line[5].lower() == 'y' else 0,
                             "OPN": 1 if line[6].lower() == 'y' else 0}, ignore_index=True)
-
-
     return df
-
-class TextPreprocessor(object):
-    def __init__(self, vocab_size):
-        self._vocab_size = vocab_size
-        self._tokenizer = None
-    def create_tokenizer(self, text_list):
-        tokenizer = text.Tokenizer(num_words = self._vocab_size)
-        tokenizer.fit_on_texts(text_list)
-        self._tokenizer = tokenizer
-
-def get_bert_data():
-    if (embed == 'bert-base'):
-        pretrained_weights = 'bert-base-uncased'
-        n_hl = 12
-        hidden_dim = 768
-    elif (embed == 'bert-large'):
-        pretrained_weights = 'bert-large-uncased'
-        n_hl = 24
-        hidden_dim = 1024
-    file = open('../' + inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
-    data = pickle.load(file)
-    data_x, data_y = list(zip(*data))
-
-    if (layer == 'all'):
-        alphaW = np.full([n_hl], 1 / n_hl)
-
-    else:
-        alphaW = np.zeros([n_hl])
-        alphaW[int(layer) - 1] = 1
-    inputs = []
-    targets = []
-    for ii in range(len(data_y)):
-        inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
-        targets.extend(data_y[ii])
-
-    return np.array(inputs), np.array(targets)
 
 def get_psycholinguist_data(dump_data):
     features = load_features('../data/essays/psycholinguist_features/')
-    feature_flags = [mairesse, nrc, nrc_vad, affectivespace, hourglass]
+    feature_flags = [mairesse, nrc, nrc_vad, affectivespace, hourglass, readability]
     first = 1
     for feature, feature_flag in zip(features, feature_flags):
         if feature_flag:
@@ -132,10 +93,6 @@ if __name__ == "__main__":
     train_size = int(len(data) * .8)
     X_train = data[: train_size]
     X_test = data[train_size: ]
-    train_post = dump_data['text'].values[: train_size]
-    test_post = dump_data['text'].values[train_size: ]
-    processor = TextPreprocessor(VOCAB_SIZE)
-    processor.create_tokenizer(train_post)
     for trait_idx in range(full_targets.shape[1]):
         targets = full_targets[:, trait_idx]
         y_train = targets[: train_size]
@@ -154,15 +111,9 @@ if __name__ == "__main__":
         explainer = shap.DeepExplainer(model, attrib_data)
         shap_vals = explainer.shap_values(X_test)
 
-        words = processor._tokenizer.word_index
-        word_lookup = list()
-        for i in words.keys():
-          word_lookup.append(i)
-
-        word_lookup = [''] + word_lookup
-        # shap.summary_plot(shap_vals, feature_names=feature_names, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
-        shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
-        import matplotlib.pyplot as plt
-        plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
-        # plt.savefig(labels_list[trait_idx]+"-hourglass.png")
-        plt.clf()
+        shap.summary_plot(shap_vals, feature_names=feature_names, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'])
+        # shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
+        # import matplotlib.pyplot as plt
+        # plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
+        # # plt.savefig(labels_list[trait_idx]+"-hourglass.png")
+        # plt.clf()
