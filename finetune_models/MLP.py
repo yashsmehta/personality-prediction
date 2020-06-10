@@ -15,7 +15,7 @@ import utils.gen_utils as utils
 inp_dir, dataset_type, _, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 n_classes = 2
 np.random.seed(seed)
-tf.compat.v1.set_random_seed(seed)
+tf.random.set_seed(seed)
 
 start = time.time()
 
@@ -54,16 +54,15 @@ for ii in range(n_batches):
 
 inputs = np.array(inputs)
 full_targets = np.array(targets)
-print(inputs.shape)
-print(full_targets.shape)
 
 trait_labels = ['EXT','NEU','AGR','CON','OPN']
-
+fold_acc = {}
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
     targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
     n_data = targets.shape[0]
-    kf = KFold(n_splits=5, shuffle=True, random_state=0)
+    fold_acc[trait_labels[trait_idx]] = []
+    kf = KFold(n_splits=10, shuffle=True, random_state=0)
     k = -1
     for train_index, test_index in kf.split(inputs):
         X_train, X_test = inputs[train_index], inputs[test_index]
@@ -79,20 +78,30 @@ for trait_idx in range(full_targets.shape[1]):
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
                       loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
                       metrics=['mse', 'accuracy'])
-
-        print(model.summary())
+        if(k==0):
+            print(model.summary())
+        
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                            validation_data=(X_test, y_test), verbose=1)
-
+                            validation_data=(X_test, y_test), verbose=0)
+        
         print('trait : ', trait_labels[trait_idx])
-        print('acc: ', history.history['accuracy'])
-        print('val acc: ', history.history['val_accuracy'])
-        print('loss: ', history.history['loss'])
-        print('val loss: ', history.history['val_loss'])
+        
+        # print('\nacc: ', history.history['accuracy'])
+        # print('val acc: ', history.history['val_accuracy'])
+        # print('MAX', max(history.history['val_accuracy']),'\n')
+        fold_acc[trait_labels[trait_idx]].append(max(history.history['val_accuracy']))
+        # print('loss: ', history.history['loss'])
+        # print('val loss: ', history.history['val_loss'])
 
         print(timedelta(seconds=int(time.time() - start)), end=' ')
 
         if (write_file):
             results_file = "MLP_t" + str(trait_idx) + '_results.csv'
             meta_info = (lr, epochs, seed, embed, layer)
-            utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'], result, str(k))
+            utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'], str(k))
+
+print(fold_acc)
+for trait in fold_acc.keys():
+    fold_acc[trait] = np.mean(fold_acc[trait])
+
+print(fold_acc)

@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime, timedelta
 
 
-def file_writer(results_file, meta_info, acc, loss_val, test_result, cv):
+def file_writer(results_file, meta_info, acc, loss_val, cv):
     lr, epochs, seed, embed, layer = meta_info
     params = ["EMBED ", embed, " LAYER ", str(layer), " LR ", str(lr), " SEED ", str(seed), " EPOCHS ", str(epochs)]
 
@@ -15,8 +15,8 @@ def file_writer(results_file, meta_info, acc, loss_val, test_result, cv):
         writer.writerow(['cv', cv])
         writer.writerow(['loss_val: ', str(loss_val)])
         writer.writerow(['acc_val: ', str(acc)])
-        writer.writerow(['loss_test: ', test_result[0]])
-        writer.writerow(['acc_test: ', test_result[2]])
+        # writer.writerow(['loss_test: ', test_result[0]])
+        # writer.writerow(['acc_test: ', test_result[2]])
         writer.writerow("")
 
         csvFile.flush()
@@ -40,7 +40,7 @@ def parse_args():
     ap.add_argument("-network", type=str, default='fc')
     ap.add_argument("-lr", type=float, default=5e-4)
     ap.add_argument("-batch_size", type=int, default=32)
-    ap.add_argument("-epochs", type=int, default=30)
+    ap.add_argument("-epochs", type=int, default=10)
     # ap.add_argument("-seed", type=int, default=np.random.randint(0,1000))
     ap.add_argument("-seed", type=int, default=0)
     ap.add_argument('-write_file', type=str_to_bool, nargs='?', const=True, default=True)
