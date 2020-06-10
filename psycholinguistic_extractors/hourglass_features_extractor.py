@@ -23,7 +23,7 @@ def extract_sentic_features(x, sentic_df):
 
 if __name__ == "__main__":
     count_df = pd.read_pickle(datafile)
-    sentic_path = "../data/essays/psycholinguist_features/meta_features_data/senticnet5_df.p"
+    sentic_path = "meta_features_data/senticnet5_df.p"
     sentic_df = pd.read_pickle(sentic_path)
     for col in ['pleasantness_value', 'attention_value', 'sensitivity_value', 'aptitude_value', 'polarity_value']:
         sentic_df[col] = pd.to_numeric(sentic_df[col])
