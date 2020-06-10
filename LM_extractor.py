@@ -10,8 +10,8 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from transformers import *
 
-from data_utils import MyMapDataset
-import utils
+import utils.gen_utils as utils
+from utils.data_utils import MyMapDataset
 
 start = time.time()
 # argument extractor

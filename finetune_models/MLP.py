@@ -10,7 +10,7 @@ import pickle
 import time
 from datetime import timedelta
 
-import utils
+import utils.gen_utils as utils
 
 inp_dir, dataset_type, _, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 n_classes = 2
