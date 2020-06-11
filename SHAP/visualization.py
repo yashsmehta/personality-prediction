@@ -3,12 +3,10 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import numpy as np
 import csv
-import pickle
 import time
 import pandas as pd
-import utils
+import utils.gen_utils as utils
 import tensorflow as tf
-from tensorflow.keras.preprocessing import text
 import shap
 import re
 import preprocessor as p
@@ -90,8 +88,8 @@ def get_psycholinguist_data(dump_data):
     data = merged[merged.columns[:-5]].values
     full_targets = merged[merged.columns[-5:]].values
     feature_names = list(merged.columns)[:-5]
-    # for f in range(79):
-    #     feature_names[f] = ' '.join(feature_names[f].split()[:-1])
+    for f in range(79):
+        feature_names[f] = ' '.join(feature_names[f].split()[:-1])
     return data, full_targets, feature_names
 
 
@@ -122,9 +120,9 @@ def visualize(shap_vals, feature_names):
 
     # shap.summary_plot(shap_vals, feature_names=feature_names,
     #                   class_names=[labels_list[trait_idx] + ' 0', labels_list[trait_idx] + ' 1'])
-    shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
-    plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
-    plt.clf()
+    # shap.summary_plot(shap_vals, feature_names=feature_names, show=False, class_names=[labels_list[trait_idx]+' 0', labels_list[trait_idx]+' 1'], plot_size=(15,15))
+    # plt.savefig(labels_list[trait_idx]+'-'+embed_mode+'-'+mode+".png")
+    # plt.clf()
     return wordcloud, most_important
 
 
@@ -165,13 +163,14 @@ if __name__ == "__main__":
         cloud_list.append(cloud)
         MI_features[labels_list[trait_idx]] = MI_features_3
 
-
+    ocean_list = [cloud_list[4], cloud_list[3], cloud_list[0], cloud_list[2], cloud_list[1]]
+    ocean_label_list = ['O', 'C', 'E', 'A', 'N']
     plt.figure(figsize=(15,4))
     for i in range(5):
         ax= plt.subplot(1,5,i+1)
-        im=ax.imshow(cloud_list[i])
+        im=ax.imshow(ocean_list[i])
         plt.tight_layout()
-        plt.title(labels_list[i])
+        plt.title(ocean_label_list[i])
         plt.subplots_adjust(wspace=0.1)
         plt.axis("off")
     plt.show()

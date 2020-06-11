@@ -6,12 +6,13 @@ import csv
 import pickle
 import time
 import pandas as pd
-import utils
+import utils.gen_utils as utils
 import tensorflow as tf
 import shap
 import re
 import preprocessor as p
 from sklearn.model_selection import KFold
+from scipy.io import arff
 
 inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
@@ -20,6 +21,39 @@ np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)
 start = time.time()
 
+def read_and_process(path):
+    arff = open(path, 'r')
+    attributes = []
+    values = []
+    is_attr = True
+    arff.readline()
+    arff.readline()
+    while is_attr:
+        line = arff.readline()
+        if len(line.split()) == 0:
+            is_attr = False
+            continue
+        type = line.split()[0]
+        attr = ' '.join(line.split()[1:])
+        if type == "@attribute":
+            attributes.append(attr)
+        else:
+            is_attr = False
+    for line in arff.readlines():
+        if len(line.split(",")) < 10:
+            continue
+        else:
+            components = line.split(",")
+            values.append(components)
+            name = components[0].replace("\'", "").split("\\\\")[-1]
+            values[-1][0] = name
+    df = pd.DataFrame(columns=attributes, data=values)
+    df['idx'] = [int(re.sub('id_', '', i)) for i in df[df.columns[0]]]
+    df = df.drop(df.columns[0], axis=1)
+    df = df.set_index(['idx'])
+    df = df.apply(pd.to_numeric, errors='coerce')
+    df = df.sort_index()
+    return df
 
 def sentence_preprocess(sentence):
     sentence = p.clean(sentence)
@@ -35,16 +69,27 @@ def sentence_preprocess(sentence):
     return sentence
 
 
-def load_features(dir):
-    mairesse = pd.read_csv(dir + 'essays_mairesse_labeled.csv')
-    mairesse = mairesse.set_index(mairesse.columns[0])
-    nrc = pd.read_csv(dir + 'essays_nrc.csv').set_index(['#AUTHID'])
-    nrc_vad = pd.read_csv(dir + 'essays_nrc-vad.csv').set_index(['#AUTHID'])
+def load_features(dir, dataset_type):
+    idx = 'id'
+    if dataset_type == 'kaggle':
+        drop_cols = ['BROWN-FREQ numeric', 'K-F-FREQ numeric', 'K-F-NCATS numeric', 'K-F-NSAMP numeric', 'T-L-FREQ numeric', 'Extraversion numeric'
+                  , '\'Emotional stability\' numeric', 'Agreeableness numeric', 'Conscientiousness numeric', '\'Openness to experience\' numeric']
+        mairesse = read_and_process(dir + dataset_type + '_mairesse_labeled.arff')
+        mairesse = mairesse.drop(drop_cols, axis=1)
+    elif dataset_type == 'essays':
+        mairesse = pd.read_csv(dir + dataset_type + '_mairesse_labeled.csv')
+    # mairesse = mairesse.set_index(mairesse.columns[0])
+    nrc = pd.read_csv(dir + dataset_type + '_nrc.csv').set_index([idx])
+    # nrc = nrc.sort_values(by=['id'])
+    # nrc = nrc.drop(['id'], axis=1)
+    nrc_vad = pd.read_csv(dir + dataset_type + '_nrc_vad.csv').set_index([idx])
+    # nrc_vad = nrc_vad.sort_values(by=['id'])
+    # nrc_vad = nrc_vad.drop(['id'], axis=1)
     # affectivespace = pd.read_csv(dir + 'essays_affectivespace.csv').set_index(['#AUTHID'])
-    hourglass = pd.read_csv(dir + 'essays_hourglass.csv').set_index(['#AUTHID'])
-    readability = pd.read_csv(dir + 'essays_readability.csv').set_index(['#AUTHID'])
+    # hourglass = pd.read_csv(dir + dataset_type + '_hourglass.csv').set_index([idx])
+    readability = pd.read_csv(dir + dataset_type + '_readability.csv').set_index([idx])
 
-    return [mairesse, nrc, nrc_vad, hourglass, readability]
+    return [nrc, nrc_vad, readability, mairesse]
 
 
 def load_essays_df(datafile):
@@ -69,9 +114,35 @@ def load_essays_df(datafile):
     return df
 
 
-def get_psycholinguist_data(dump_data):
-    features = load_features('../data/essays/psycholinguist_features/')
-    feature_flags = [mairesse, nrc, nrc_vad, hourglass, readability]
+def load_Kaggle_df(datafile):
+    with open(datafile, "rt") as csvf:
+        csvreader = csv.reader(csvf, delimiter=',', quotechar='"')
+        first_line = True
+        df = pd.DataFrame(columns=["user", "text", "E", "N", "F", "J"])
+        for line in csvreader:
+            if first_line:
+                first_line = False
+                continue
+
+            text = line[1]
+
+            df = df.append({"user": line[3],
+                            "text": text,
+                            "E": 1 if line[0][0] == 'E' else 0,
+                            "N": 1 if line[0][1] == 'N' else 0,
+                            "F": 1 if line[0][2] == 'F' else 0,
+                            "J": 1 if line[0][3] == 'J' else 0, }, ignore_index=True)
+
+    print('E : ', df['E'].value_counts())
+    print('N : ', df['N'].value_counts())
+    print('F : ', df['F'].value_counts())
+    print('J : ', df['J'].value_counts())
+
+    return df
+
+def get_psycholinguist_data(dump_data, dataset_type):
+    features = load_features('../data/'+dataset_type+'/psycholinguist_features/', dataset_type)
+    feature_flags = [nrc, nrc_vad, readability, mairesse]
     first = 1
     for feature, feature_flag in zip(features, feature_flags):
         if feature_flag:
@@ -80,22 +151,28 @@ def get_psycholinguist_data(dump_data):
                 first = 0
             else:
                 df = pd.merge(df, feature, left_index=True, right_index=True)
-    labels = dump_data[['user', 'EXT', 'NEU', 'AGR', 'CON', 'OPN']]
+    if dataset_type == 'essays':
+        labels = dump_data[['user', 'EXT', 'NEU', 'AGR', 'CON', 'OPN']]
+    if dataset_type == 'kaggle':
+        labels = dump_data[['user', 'E', 'N', 'F', 'J']]
     labels = labels.set_index('user')
+    labels.index = pd.to_numeric(labels.index, errors='coerce')
+    df.index = pd.to_numeric(df.index, errors='coerce')
     merged = pd.merge(df, labels, left_index=True, right_index=True).fillna(0)
-    data = merged[merged.columns[:-5]].values
-    full_targets = merged[merged.columns[-5:]].values
+    data = merged[merged.columns[:-4]].values
+    full_targets = merged[merged.columns[-4:]].values
     feature_names = merged.columns
     return data, full_targets, feature_names
 
 if __name__ == "__main__":
-    dump_data = load_essays_df('../data/essays/essays.csv')
-    labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
-    data, full_targets, feature_names = get_psycholinguist_data(dump_data)
-    # data, full_targets = get_bert_data()
-    VOCAB_SIZE = 2000
-    train_size = int(len(data) * .8)
-    file = open('MLP_other_features_results.txt', 'a')
+    if dataset_type == 'essays':
+        dump_data = load_essays_df('../data/essays/essays.csv')
+        labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
+    elif dataset_type == 'kaggle':
+        dump_data = load_Kaggle_df('../data/kaggle/kaggle.csv')
+        labels_list = ['E', 'N', 'F', 'J']
+    data, full_targets, feature_names = get_psycholinguist_data(dump_data, dataset_type)
+    file = open('MLP_other_features_results_'+dataset_type+'.txt', 'a')
     for trait_idx in range(full_targets.shape[1]):
         targets = full_targets[:, trait_idx]
         targets = tf.keras.utils.to_categorical(targets, num_classes=n_classes)
