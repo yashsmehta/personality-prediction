@@ -62,7 +62,7 @@ map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVI
 
 data_loader = DataLoader(dataset=map_dataset,
                          batch_size=batch_size,
-                         shuffle=True,
+                         shuffle=False,
                          )
 
 if (DEVICE == torch.device("cuda")):
@@ -75,9 +75,12 @@ print('starting to extract LM embeddings...')
 
 hidden_features = []
 all_targets = []
-for input_ids, targets in data_loader:
+all_author_ids = []
+
+for author_ids, input_ids, targets in data_loader:
     with torch.no_grad():
         all_targets.append(targets.cpu().numpy())
+        all_author_ids.append(author_ids.cpu().numpy())
         
         if (mode == 'docbert'):
             # print(input_ids.shape)
@@ -98,9 +101,7 @@ for input_ids, targets in data_loader:
             
             
             tmphidden_features = np.array(tmphidden_features)
-            print(tmphidden_features.shape)
             hidden_features.append(tmphidden_features.mean(axis=0))
-            exit()
 
         else:
             tmp = []
@@ -117,9 +118,8 @@ for input_ids, targets in data_loader:
         
 # storing the embeddings into a pickle file
 
-
 file = open(op_dir + dataset_type + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
-pickle.dump(zip(hidden_features, all_targets), file)
+pickle.dump(zip(all_author_ids, hidden_features, all_targets), file)
 file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')

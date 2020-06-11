@@ -2,6 +2,5 @@
 pkl_data/
 __pycache__/
 logs/
-data/kaggle
 data/pandora
 *.sbatch

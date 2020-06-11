@@ -74,14 +74,14 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
         tokens = tokenizer.tokenize(df['text'][ind])
         df.at[ind, 'token_len'] = len(tokens)
     
-    df.sort_values(by=['token_len'],inplace=True, ascending=True)
+    df.sort_values(by=['token_len', 'user'],inplace=True, ascending=True)
     print(df['token_len'])
     print(df['token_len'].mean())
 
-    for ind in df.index:
-        text = preprocess_text(df['text'][ind])
+    for ii in range(len(df)):
+        text = preprocess_text(df['text'][ii])
         tokens = tokenizer.tokenize(text)
-        df.at[ind, 'token_len'] = len(tokens)
+    
         if mode == 'normal' or mode == '512_head':
             input_ids.append(tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True))
         elif mode == '512_tail':
@@ -110,11 +110,12 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
         if (cnt < 10):
             print(input_ids[-1])
 
-        targets.append([df['EXT'][ind], df['NEU'][ind], df['AGR'][ind], df['CON'][ind], df['OPN'][ind]])
+        targets.append([df['EXT'][ii], df['NEU'][ii], df['AGR'][ii], df['CON'][ii], df['OPN'][ii]])
         cnt += 1
 
+    author_ids = np.array(df.index)
     print('loaded all input_ids and targets from the data file!')    
-    return input_ids, targets
+    return author_ids, input_ids, targets
 
 def load_Kaggle_df(datafile):
     with open(datafile, "rt") as csvf:
@@ -162,11 +163,13 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
 
         input_ids.append(token_ids)
         targets.append([df['E'][ind], df['N'][ind], df['F'][ind], df['J'][ind]])
-
+        author_ids.append(df['user'][ind])
         cnt += 1
     print('token lengths : ', token_len)
     print('average length : ', int(np.mean(token_len)))
-    return input_ids, targets
+    author_ids = np.array(df.index)
+
+    return author_ids, input_ids, targets
 
 
 def load_pandora_df(datafile):
@@ -221,25 +224,29 @@ def pandora_embeddings(datafile, tokenizer, token_length):
         cnt += 1
     print('token lengths : ', token_len)
     print('average length : ', int(np.mean(token_len)))
-    return input_ids, targets
+    author_ids = np.array(df.index)
+    return author_ids, input_ids, targets
 
 
 class MyMapDataset(Dataset):
     def __init__(self, dataset_type, datafile, tokenizer, token_length, DEVICE, mode):
         if dataset_type == 'essays':
-            input_ids, targets = essays_embeddings(datafile, tokenizer, token_length, mode)
+            author_ids, input_ids, targets = essays_embeddings(datafile, tokenizer, token_length, mode)
         elif dataset_type == 'kaggle':
-            input_ids, targets = kaggle_embeddings(datafile, tokenizer, token_length)
+            author_ids, input_ids, targets = kaggle_embeddings(datafile, tokenizer, token_length)
         elif dataset_type == 'pandora':
-            input_ids, targets = pandora_embeddings(datafile, tokenizer, token_length)
+            author_ids, input_ids, targets = pandora_embeddings(datafile, tokenizer, token_length)
 
+        author_ids = torch.from_numpy(np.array(author_ids))
         input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)
         targets = torch.from_numpy(np.array(targets))
+
         if dataset_type == 'pandora':
             targets = targets.float().to(DEVICE)
         else:
             targets = targets.long().to(DEVICE)
 
+        self.author_ids = author_ids
         self.input_ids = input_ids
         self.targets = targets
 
@@ -247,4 +254,4 @@ class MyMapDataset(Dataset):
         return len(self.targets)
 
     def __getitem__(self, idx):
-        return (self.input_ids[idx], self.targets[idx])
+        return (self.author_ids[idx], self.input_ids[idx], self.targets[idx])
