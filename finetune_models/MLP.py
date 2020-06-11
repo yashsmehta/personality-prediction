@@ -9,6 +9,7 @@ import re
 import pickle
 import time
 from datetime import timedelta
+import pandas as pd
 
 import utils.gen_utils as utils
 
@@ -19,6 +20,10 @@ np.random.seed(seed)
 tf.random.set_seed(seed)
 
 start = time.time()
+
+def merge_features(embedding, other_features):
+    df = pd.merge(embedding, other_features, left_index=True, right_index=True)
+    return df
 
 if (re.search(r'base', embed)):
     n_hl = 12
