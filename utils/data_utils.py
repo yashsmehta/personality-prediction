@@ -19,9 +19,9 @@ def preprocess_text(sentence):
     # Remove hyperlinks
     sentence = re.sub(r'http\S+', ' ', sentence)
     # Remove punctuations and numbers
-    sentence = re.sub('[^a-zA-Z]', ' ', sentence)
-    sentence = re.sub('[^a-zA-Z.?!,]', ' ', sentence)
-    # Single character removal (except I)
+    # sentence = re.sub('[^a-zA-Z]', ' ', sentence)
+    # sentence = re.sub('[^a-zA-Z.?!,]', ' ', sentence)
+    # # Single character removal (except I)
     # sentence = re.sub(r"\s+[a-zA-HJ-Z]\s+", ' ', sentence)
     # Removing multiple spaces
     sentence = re.sub(r'\s+', ' ', sentence)
@@ -33,7 +33,7 @@ def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
         csvreader = csv.reader(csvf, delimiter=',', quotechar='"')
         first_line = True
-        df = pd.DataFrame(columns=["user", "text", "EXT", "NEU", "AGR", "CON", "OPN"])
+        df = pd.DataFrame(columns=["user", "text" , "token_len" , "EXT", "NEU", "AGR", "CON", "OPN"])
         for line in csvreader:
             if first_line:
                 first_line = False
@@ -43,6 +43,7 @@ def load_essays_df(datafile):
 
             df = df.append({"user": line[0],
                             "text": text,
+                            "token_len": 0,
                             "EXT": 1 if line[2].lower() == 'y' else 0,
                             "NEU": 1 if line[3].lower() == 'y' else 0,
                             "AGR": 1 if line[4].lower() == 'y' else 0,
@@ -67,41 +68,53 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
     df = load_essays_df(datafile)
     cnt = 0
     num_subdocs = []
+    
+    #sorting all essays in ascending order of their length
+    for ind in df.index:
+        tokens = tokenizer.tokenize(df['text'][ind])
+        df.at[ind, 'token_len'] = len(tokens)
+    
+    df.sort_values(by=['token_len'],inplace=True, ascending=True)
+    print(df['token_len'])
+    print(df['token_len'].mean())
+
     for ind in df.index:
         text = preprocess_text(df['text'][ind])
         tokens = tokenizer.tokenize(text)
-        token_len.append(len(tokens))
+        df.at[ind, 'token_len'] = len(tokens)
         if mode == 'normal' or mode == '512_head':
-            token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+            input_ids.append(tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True))
         elif mode == '512_tail':
-            token_ids = tokenizer.encode(tokens[-(token_length-2):], add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
+            input_ids.append(tokenizer.encode(tokens[-(token_length-2):], add_special_tokens=True, max_length=token_length, pad_to_max_length=True))
         elif mode == '256_head_tail':
-            token_ids = tokenizer.encode(tokens[:(token_length-1)]+tokens[-(token_length-1):], add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
-        if mode != 'docbert':
-            input_ids.append(token_ids)
+            input_ids.append(tokenizer.encode(tokens[:(token_length-1)]+tokens[-(token_length-1):], add_special_tokens=True, max_length=token_length, pad_to_max_length=True))
+        
         elif mode == 'docbert':
-            bound = 512
-            num_pieces = math.ceil(len(tokens) / bound)
-            tokens_list = [tokens[i * bound:(i + 1) * bound] for i in range(num_pieces-1)]
-            tokens_list.append(tokens[-(len(tokens) - (num_pieces-1) * bound):])
+            docmax_len = 2048
+            subdoc_len = 256
+            max_subdoc_num = docmax_len // subdoc_len
+            subdoc_tokens = [tokens[i:i+subdoc_len] for i in range(0, len(tokens), subdoc_len)][:max_subdoc_num]
+            # print(subdoc_tokens)
             token_ids = [tokenizer.encode(x, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
-                         for x in tokens_list]
-            num_subdocs.append(num_pieces)
-            for subdoc in token_ids:
-                input_ids.append(subdoc)
+                         for x in subdoc_tokens]
+            # print(token_ids)
+            token_ids = np.array(token_ids).astype(int)
+            
+            buffer_len = docmax_len//subdoc_len - token_ids.shape[0]
+            # print(buffer_len)
+            tmp = np.full(shape=(buffer_len, token_length), fill_value=0, dtype=int)
+            token_ids = np.concatenate((token_ids, tmp), axis=0)
+            
+            input_ids.append(token_ids)
+        
         if (cnt < 10):
-            print(tokens)
+            print(input_ids[-1])
+
         targets.append([df['EXT'][ind], df['NEU'][ind], df['AGR'][ind], df['CON'][ind], df['OPN'][ind]])
-
         cnt += 1
-    if mode == 'docbert':
-        file = open('num_sobdocuments_'+str(bound)+'.txt', 'w')
-        file.write(str(num_subdocs))
-        file.close()
-    print('token lengths : ', token_len)
-    print('average length : ', int(np.mean(token_len)))
-    return input_ids, targets
 
+    print('loaded all input_ids and targets from the data file!')    
+    return input_ids, targets
 
 def load_Kaggle_df(datafile):
     with open(datafile, "rt") as csvf:

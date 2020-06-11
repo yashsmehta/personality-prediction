@@ -30,19 +30,23 @@ else:
 # * Model          | Tokenizer          | Pretrained weights shortcut
 # MODEL=(DistilBertModel, DistilBertTokenizer, 'distilbert-base-uncased')
 if (embed == 'bert-base'):
-    n_hl = 12;
+    n_hl = 12
+    hidden_dim = 768
     MODEL = (BertModel, BertTokenizer, 'bert-base-uncased')
 
 elif (embed == 'bert-large'):
-    n_hl = 24;
+    n_hl = 24
+    hidden_dim = 1024
     MODEL = (BertModel, BertTokenizer, 'bert-large-uncased')
 
 elif (embed == 'albert-base'):
-    n_hl = 12;
+    n_hl = 12
+    hidden_dim = 768
     MODEL = (AlbertModel, AlbertTokenizer, 'albert-base-v2')
 
 elif (embed == 'albert-large'):
-    n_hl = 24;
+    n_hl = 24
+    hidden_dim = 1024
     MODEL = (AlbertModel, AlbertTokenizer, 'albert-large-v2')
 
 model_class, tokenizer_class, pretrained_weights = MODEL
@@ -70,32 +74,47 @@ if (DEVICE == torch.device("cuda")):
 print('starting to extract LM embeddings...')
 
 hidden_features = []
-hidden_features2 = []
 all_targets = []
 for input_ids, targets in data_loader:
     with torch.no_grad():
         all_targets.append(targets.cpu().numpy())
-        # get the LM embeddings
+        
         if (mode == 'docbert'):
-            print(len(input_ids))
-            break
-
-            # for ii in range(len(input_ids)):
+            # print(input_ids.shape)
+            tmphidden_features = []
+            input_ids = input_ids.permute(1,0,2)
             
+            for jj in range(input_ids.shape[0]):
+                tmp = []
+                if(input_ids[jj][0][0] == 0):
+                    print('breaking out~!')
+                    break
+
+                bert_output = model(input_ids[jj])
+                for ii in range(n_hl):
+                    tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
+
+                tmphidden_features.append(tmp)
+            
+            
+            tmphidden_features = np.array(tmphidden_features)
+            print(tmphidden_features.shape)
+            hidden_features.append(tmphidden_features.mean(axis=0))
+            exit()
+
         else:
+            tmp = []
             bert_output = model(input_ids)
-
-        # bert_output[2](this id gives all BERT outputs)[ii+1](which BERT layer)[:,0,:](taking the <CLS> output)
-        tmp = []
-    
-        for ii in range(n_hl):
-            if(embed_mode == 'cls'):
-                tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
-            elif(embed_mode == 'mean'):
-                tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
-            
-        hidden_features.append(np.array(tmp))
-
+            # bert_output[2](this id gives all BERT outputs)[ii+1](which BERT layer)[:,0,:](taking the <CLS> output)
+        
+            for ii in range(n_hl):
+                if(embed_mode == 'cls'):
+                    tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
+                elif(embed_mode == 'mean'):
+                    tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
+                
+            hidden_features.append(np.array(tmp))
+        
 # storing the embeddings into a pickle file
 
 
@@ -103,6 +122,9 @@ file = open(op_dir + dataset_type + '-' + embed + '-' +embed_mode + '-' + mode +
 pickle.dump(zip(hidden_features, all_targets), file)
 file.close()
 
-
 print(timedelta(seconds=int(time.time() - start)), end=' ')
 print('extracting embeddings for Essays dataset: DONE!')
+
+# input_ids = input_ids.cpu().numpy()
+# subdoc_input_ids = torch.from_numpy(subdoc_input_ids).long().to(DEVICE)
+                

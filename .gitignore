@@ -4,4 +4,4 @@ __pycache__/
 logs/
 data/kaggle
 data/pandora
-submit_job.sbatch
+*.sbatch
