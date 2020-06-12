@@ -91,7 +91,7 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
         
         elif mode == 'docbert':
             docmax_len = 2048
-            subdoc_len = 256
+            subdoc_len = 512
             max_subdoc_num = docmax_len // subdoc_len
             subdoc_tokens = [tokens[i:i+subdoc_len] for i in range(0, len(tokens), subdoc_len)][:max_subdoc_num]
             # print(subdoc_tokens)
@@ -107,7 +107,7 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
             
             input_ids.append(token_ids)
         
-        if (cnt < 10):
+        if (cnt < 3):
             print(input_ids[-1])
 
         targets.append([df['EXT'][ii], df['NEU'][ii], df['AGR'][ii], df['CON'][ii], df['OPN'][ii]])

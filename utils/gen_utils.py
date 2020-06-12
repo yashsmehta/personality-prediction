@@ -43,7 +43,7 @@ def parse_args():
     ap.add_argument("-epochs", type=int, default=10)
     # ap.add_argument("-seed", type=int, default=np.random.randint(0,1000))
     ap.add_argument("-seed", type=int, default=0)
-    ap.add_argument('-write_file', type=str_to_bool, nargs='?', const=True, default=True)
+    ap.add_argument('-write_file', type=str_to_bool, nargs='?', const=True, default=False)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-layer", type=str, default='11')
     ap.add_argument("-mode", type=str, default=None)

@@ -36,7 +36,7 @@ elif (re.search(r'large', embed)):
 file = open(inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
 
 data = pickle.load(file)
-data_x, data_y = list(zip(*data))
+author_ids, data_x, data_y = list(zip(*data))
 file.close()
 
 # alphaW is responsible for which BERT layer embedding we will be using
@@ -80,6 +80,8 @@ for trait_idx in range(full_targets.shape[1]):
         model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
         # model.add(tf.keras.layers.Dense(50, activation='relu'))
         model.add(tf.keras.layers.Dense(n_classes))
+
+        # model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
 
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
                       loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),

@@ -16,6 +16,7 @@ from utils.data_utils import MyMapDataset
 start = time.time()
 # argument extractor
 dataset_type, token_length, datafile, batch_size, embed, op_dir, mode, embed_mode = utils.parse_args_extractor()
+print('{} : {} : {} : {} : {}'.format(dataset_type, embed, token_length, mode, embed_mode))
 
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
@@ -90,12 +91,14 @@ for author_ids, input_ids, targets in data_loader:
             for jj in range(input_ids.shape[0]):
                 tmp = []
                 if(input_ids[jj][0][0] == 0):
-                    print('breaking out~!')
                     break
 
                 bert_output = model(input_ids[jj])
                 for ii in range(n_hl):
-                    tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
+                    if(embed_mode == 'mean'):
+                        tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
+                    elif(embed_mode == 'cls'):
+                        tmp.append(bert_output[2][ii + 1][:, 0, :].cpu().numpy())
 
                 tmphidden_features.append(tmp)
             
@@ -123,7 +126,7 @@ pickle.dump(zip(all_author_ids, hidden_features, all_targets), file)
 file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
-print('extracting embeddings for Essays dataset: DONE!')
+print('extracting embeddings for {} dataset: DONE!'.format(dataset_type))
 
 # input_ids = input_ids.cpu().numpy()
 # subdoc_input_ids = torch.from_numpy(subdoc_input_ids).long().to(DEVICE)
