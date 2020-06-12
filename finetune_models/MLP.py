@@ -21,9 +21,47 @@ tf.random.set_seed(seed)
 
 start = time.time()
 
-def merge_features(embedding, other_features):
-    df = pd.merge(embedding, other_features, left_index=True, right_index=True)
+def load_features(dir, dataset_type):
+    if dataset_type == 'kaggle' or dataset_type == 'pandora':
+        drop_cols = ['BROWN-FREQ numeric', 'K-F-FREQ numeric', 'K-F-NCATS numeric', 'K-F-NSAMP numeric',
+                     'T-L-FREQ numeric', 'Extraversion numeric'
+            , '\'Emotional stability\' numeric', 'Agreeableness numeric', 'Conscientiousness numeric',
+                     '\'Openness to experience\' numeric']
+        mairesse = utils.read_and_process(dir + dataset_type + '_mairesse_labeled.arff')
+        mairesse = mairesse.drop(drop_cols, axis=1)
+    elif dataset_type == 'essays':
+        idx = '#AUTHID'
+        mairesse = pd.read_csv(dir + dataset_type + '_mairesse_labeled.csv')
+    mairesse = mairesse.set_index(mairesse.columns[0])
+    nrc = pd.read_csv(dir + dataset_type + '_nrc.csv').set_index([idx])
+    nrc_vad = pd.read_csv(dir + dataset_type + '_nrc_vad.csv').set_index([idx])
+    hourglass = pd.read_csv(dir + dataset_type + '_hourglass.csv').set_index([idx])
+    readability = pd.read_csv(dir + dataset_type + '_readability.csv').set_index([idx])
+
+    return [nrc, nrc_vad, readability, mairesse, hourglass]
+
+def get_psycholinguist_data(dump_data, dataset_type):
+    features = load_features('../data/' + dataset_type + '/psycholinguist_features/', dataset_type)
+    first = 1
+    for feature in features:
+        if first:
+            df = feature
+            first = 0
+        else:
+            df = pd.merge(df, feature, left_index=True, right_index=True)
+    df = pd.merge(dump_data['text'], df, left_index=True, right_index=True)
+    df.reset_index(inplace=True)
+    df = df.drop(['text'], axis=1)
     return df
+
+
+def merge_features(embedding, other_features, full_targets):
+    df = pd.merge(embedding, other_features, left_index=True, right_index=True)
+    df = pd.merge(df, full_targets, left_index=True, right_index=True)
+    df = df.drop(['index'], axis=1)
+    data_arr = df[df.columns[:-len(trait_labels)]].values
+    targets_arr = df[df.columns[-len(trait_labels):]].values
+    return data_arr, targets_arr
 
 if (re.search(r'base', embed)):
     n_hl = 12
@@ -36,7 +74,7 @@ elif (re.search(r'large', embed)):
 file = open(inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
 
 data = pickle.load(file)
-author_ids, data_x, data_y = list(zip(*data))
+orders, data_x, data_y = list(zip(*data))
 file.close()
 
 # alphaW is responsible for which BERT layer embedding we will be using
@@ -58,10 +96,24 @@ for ii in range(n_batches):
     inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
     targets.extend(data_y[ii])
 
-inputs = np.array(inputs)
-full_targets = np.array(targets)
 
-trait_labels = ['EXT','NEU','AGR','CON','OPN']
+inputs = pd.DataFrame(np.array(inputs))
+inputs['order'] = orders[0]
+inputs = inputs.set_index(['order'])
+full_targets = pd.DataFrame(np.array(targets))
+full_targets['order'] = orders[0]
+full_targets = full_targets.set_index(['order'])
+
+if dataset_type == 'essays':
+    dump_data = pd.read_csv('../data/essays/essays.csv', index_col='#AUTHID')
+    trait_labels = ['EXT','NEU','AGR','CON','OPN']
+elif dataset_type == 'kaggle':
+    dump_data = pd.read_csv('../data/kaggle/kaggle.csv', index_col='id')
+    trait_labels = ['E', 'N', 'F', 'J']
+
+other_featers_df = get_psycholinguist_data(dump_data, dataset_type)
+inputs, full_targets = merge_features(inputs, other_featers_df, full_targets)
+
 fold_acc = {}
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
