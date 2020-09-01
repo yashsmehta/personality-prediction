@@ -20,7 +20,7 @@ import gen_utils as utils
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 # embed_mode {mean, cls}
 # mode {512_head, 512_tail, 256_head_tail}
-network = 'MLP'
+network = 'LR'
 print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
 seed = jobid
@@ -95,12 +95,9 @@ for trait_idx in range(full_targets.shape[1]):
         model = tf.keras.models.Sequential()
 
         # define the neural network architecture
-        model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
+        model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
         # model.add(tf.keras.layers.Dense(50, activation='relu'))
-        model.add(tf.keras.layers.Dense(n_classes))
-
-        # model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
-
+    
         k+=1
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
                 loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
@@ -115,7 +112,7 @@ for trait_idx in range(full_targets.shape[1]):
         # print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
         
         # print('\nacc: ', history.history['accuracy'])
-        print('val acc: ', history.history['val_accuracy'])
+        # print('val acc: ', history.history['val_accuracy'])
         # print('loss: ', history.history['loss'])
         # print('val loss: ', history.history['val_loss'])
         expdata['acc'].append(max(history.history['val_accuracy']))
@@ -124,7 +121,8 @@ for trait_idx in range(full_targets.shape[1]):
 # for trait in fold_acc.keys():
 #     fold_acc[trait] = np.mean(fold_acc[trait])
 
-print (expdata)
+# print (expdata)
+print ("done")
 
 df = pd.DataFrame.from_dict(expdata)
 

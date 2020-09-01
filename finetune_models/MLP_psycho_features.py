@@ -6,19 +6,32 @@ import csv
 import pickle
 import time
 import pandas as pd
-import utils.gen_utils as utils
 import tensorflow as tf
-import shap
 import re
 import preprocessor as p
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from scipy.io import arff
 
-inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
-mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
+import sys
+sys.path.insert(0,'/nfs/ghome/live/yashm/Desktop/research/personality/utils')
+
+import gen_utils as utils
+
+log_expdata = False
+epochs = 3
+batch_size = 32
+dataset = 'essays'
+path = 'explogs/'
 n_classes = 2
+seed = 0
+network = 'MLP'
+print(network)
+
+mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
+
 np.random.seed(seed)
-tf.compat.v1.set_random_seed(seed)
+tf.random.set_seed(seed)
+
 start = time.time()
 
 def read_and_process(path):
@@ -69,25 +82,26 @@ def sentence_preprocess(sentence):
     return sentence
 
 
-def load_features(dir, dataset_type):
+def load_features(dir, dataset):
     idx = 'id'
-    if dataset_type == 'kaggle':
+    if dataset == 'kaggle':
         drop_cols = ['BROWN-FREQ numeric', 'K-F-FREQ numeric', 'K-F-NCATS numeric', 'K-F-NSAMP numeric', 'T-L-FREQ numeric', 'Extraversion numeric'
                   , '\'Emotional stability\' numeric', 'Agreeableness numeric', 'Conscientiousness numeric', '\'Openness to experience\' numeric']
-        mairesse = read_and_process(dir + dataset_type + '_mairesse_labeled.arff')
+        mairesse = read_and_process(dir + dataset + '_mairesse_labeled.arff')
         mairesse = mairesse.drop(drop_cols, axis=1)
-    elif dataset_type == 'essays':
-        mairesse = pd.read_csv(dir + dataset_type + '_mairesse_labeled.csv')
+    elif dataset == 'essays':
+        idx = '#AUTHID'
+        mairesse = pd.read_csv(dir + dataset + '_mairesse_labeled.csv')
     # mairesse = mairesse.set_index(mairesse.columns[0])
-    nrc = pd.read_csv(dir + dataset_type + '_nrc.csv').set_index([idx])
+    nrc = pd.read_csv(dir + dataset + '_nrc.csv').set_index([idx])
     # nrc = nrc.sort_values(by=['id'])
     # nrc = nrc.drop(['id'], axis=1)
-    nrc_vad = pd.read_csv(dir + dataset_type + '_nrc_vad.csv').set_index([idx])
+    nrc_vad = pd.read_csv(dir + dataset + '_nrc_vad.csv').set_index([idx])
     # nrc_vad = nrc_vad.sort_values(by=['id'])
     # nrc_vad = nrc_vad.drop(['id'], axis=1)
     # affectivespace = pd.read_csv(dir + 'essays_affectivespace.csv').set_index(['#AUTHID'])
-    # hourglass = pd.read_csv(dir + dataset_type + '_hourglass.csv').set_index([idx])
-    readability = pd.read_csv(dir + dataset_type + '_readability.csv').set_index([idx])
+    # hourglass = pd.read_csv(dir + dataset + '_hourglass.csv').set_index([idx])
+    readability = pd.read_csv(dir + dataset + '_readability.csv').set_index([idx])
 
     return [nrc, nrc_vad, readability, mairesse]
 
@@ -140,8 +154,8 @@ def load_Kaggle_df(datafile):
 
     return df
 
-def get_psycholinguist_data(dump_data, dataset_type):
-    features = load_features('../data/'+dataset_type+'/psycholinguist_features/', dataset_type)
+def get_psycholinguist_data(dump_data, dataset):
+    features = load_features('data/'+dataset+'/psycholinguist_features/', dataset)
     feature_flags = [nrc, nrc_vad, readability, mairesse]
     first = 1
     for feature, feature_flag in zip(features, feature_flags):
@@ -151,9 +165,9 @@ def get_psycholinguist_data(dump_data, dataset_type):
                 first = 0
             else:
                 df = pd.merge(df, feature, left_index=True, right_index=True)
-    if dataset_type == 'essays':
+    if dataset == 'essays':
         labels = dump_data[['user', 'EXT', 'NEU', 'AGR', 'CON', 'OPN']]
-    if dataset_type == 'kaggle':
+    if dataset == 'kaggle':
         labels = dump_data[['user', 'E', 'N', 'F', 'J']]
     labels = labels.set_index('user')
     labels.index = pd.to_numeric(labels.index, errors='coerce')
@@ -165,35 +179,113 @@ def get_psycholinguist_data(dump_data, dataset_type):
     return data, full_targets, feature_names
 
 if __name__ == "__main__":
-    if dataset_type == 'essays':
-        dump_data = load_essays_df('../data/essays/essays.csv')
+    if dataset == 'essays':
+        dump_data = load_essays_df('data/essays/essays.csv')
         labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
-    elif dataset_type == 'kaggle':
+    elif dataset == 'kaggle':
         dump_data = load_Kaggle_df('../data/kaggle/kaggle.csv')
         labels_list = ['E', 'N', 'F', 'J']
-    data, full_targets, feature_names = get_psycholinguist_data(dump_data, dataset_type)
-    file = open('MLP_other_features_results_'+dataset_type+'.txt', 'a')
-    for trait_idx in range(full_targets.shape[1]):
-        targets = full_targets[:, trait_idx]
-        targets = tf.keras.utils.to_categorical(targets, num_classes=n_classes)
+    print('dataset loaded! Getting psycholinguistic features...')
+    inputs, full_targets, feature_names = get_psycholinguist_data(dump_data, dataset)
+    inputs = np.array(inputs)
+    full_targets = np.array(full_targets)
 
-        kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    print(inputs.shape)
+    print(full_targets.shape)
+    print(feature_names)
+    print('starting k-fold cross validation...')
+    trait_labels = ['EXT','NEU','AGR','CON','OPN']
+    n_splits = 10
+    fold_acc = {}
+    expdata = {}
+    expdata['acc'], expdata['trait'], expdata['fold'] = [],[],[]
+
+    for trait_idx in range(full_targets.shape[1]):
+        # convert targets to one-hot encoding
+        targets = full_targets[:, trait_idx]
+        n_data = targets.shape[0]
+        
+        expdata['trait'].extend([trait_labels[trait_idx]] * n_splits)
+        expdata['fold'].extend(np.arange(1,n_splits+1))
+
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=False)
         k = -1
-        sum_res = 0
-        for train_index, test_index in kf.split(data):
-            X_train, X_test = data[train_index], data[test_index]
+
+        for train_index, test_index in skf.split(inputs, targets):
+            x_train, x_test = inputs[train_index], inputs[test_index]
             y_train, y_test = targets[train_index], targets[test_index]
+            #converting to one-hot embedding
+            y_train = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
+            y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
             model = tf.keras.models.Sequential()
-            model.add(tf.keras.layers.Dense(128, input_shape=(data.shape[-1],), activation='relu'))
-            model.add(tf.keras.layers.Dense(50, activation='relu'))
-            model.add(tf.keras.layers.Dense(2, activation='softmax'))
-            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-            saver = tf.keras.callbacks.ModelCheckpoint('model'+str(trait_idx)+".hdf5",save_best_only=True)
-            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, callbacks=[saver])
-            results = model.evaluate(X_test, y_test, batch_size=batch_size)
-            print('Eval loss/accuracy:{}'.format(results))
-            sum_res += results[1]
-        file.write(str(trait_idx) +' : '+ str(sum_res/10)+'\n')
-    file.write('\n')
-    file.close()
+
+            # define the neural network architecture
+            model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
+            # model.add(tf.keras.layers.Dense(50, activation='relu'))
+            model.add(tf.keras.layers.Dense(n_classes))
+
+            # model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
+
+            k+=1
+            model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+                    loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                    metrics=['mse', 'accuracy'])
+            
+            history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
+                                validation_data=(x_test, y_test), verbose=0)
+            
+            # if(k==0):
+            #     print(model.summary())
+            
+            # print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
+            
+            # print('\nacc: ', history.history['accuracy'])
+            print('val acc: ', history.history['val_accuracy'])
+            # print('loss: ', history.history['loss'])
+            # print('val loss: ', history.history['val_loss'])
+            expdata['acc'].append(max(history.history['val_accuracy']))
+
+    print (expdata)
+
+    df = pd.DataFrame.from_dict(expdata)
+
+    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
+                                                                        dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+
+    pd.set_option('display.max_columns', None)
+    print(df.head(5))
+
+    # save the results of our experiment
+    if(log_expdata):
+        Path(path).mkdir(parents=True, exist_ok=True)
+        if(not os.path.exists(path + 'expdata.csv')):
+            df.to_csv(path + 'expdata.csv', mode='a', header=True)
+        else:
+            df.to_csv(path + 'expdata.csv', mode='a', header=False)
+    
+    # file = open('MLP_other_features_results_'+dataset+'.txt', 'a')
+    
+    # for trait_idx in range(full_targets.shape[1]):
+    #     targets = full_targets[:, trait_idx]
+    #     targets = tf.keras.utils.to_categorical(targets, num_classes=n_classes)
+
+    #     kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    #     k = -1
+    #     sum_res = 0
+    #     for train_index, test_index in kf.split(data):
+    #         X_train, X_test = data[train_index], data[test_index]
+    #         y_train, y_test = targets[train_index], targets[test_index]
+    #         model = tf.keras.models.Sequential()
+    #         model.add(tf.keras.layers.Dense(128, input_shape=(data.shape[-1],), activation='relu'))
+    #         model.add(tf.keras.layers.Dense(50, activation='relu'))
+    #         model.add(tf.keras.layers.Dense(2, activation='softmax'))
+    #         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    #         saver = tf.keras.callbacks.ModelCheckpoint('model'+str(trait_idx)+".hdf5",save_best_only=True)
+    #         model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, callbacks=[saver])
+    #         results = model.evaluate(X_test, y_test, batch_size=batch_size)
+    #         print('Eval loss/accuracy:{}'.format(results))
+    #         sum_res += results[1]
+    #     file.write(str(trait_idx) +' : '+ str(sum_res/10)+'\n')
+    # file.write('\n')
+    # file.close()
 
