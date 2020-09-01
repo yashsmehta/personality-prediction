@@ -74,14 +74,15 @@ trait_labels = ['EXT','NEU','AGR','CON','OPN']
 n_splits = 10
 fold_acc = {}
 expdata = {}
-expdata['fold'] = np.arange(1,n_splits+1)   
-             
+expdata['acc'], expdata['trait'], expdata['fold'] = [],[],[]
+
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
     targets = full_targets[:, trait_idx]
     n_data = targets.shape[0]
-    expdata[trait_labels[trait_idx]] = []
     
+    expdata['trait'].extend([trait_labels[trait_idx]] * n_splits)
+    expdata['fold'].extend(np.arange(1,n_splits+1))
 
     skf = StratifiedKFold(n_splits=n_splits, shuffle=False)
     k = -1
@@ -105,27 +106,25 @@ for trait_idx in range(full_targets.shape[1]):
                 loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
                 metrics=['mse', 'accuracy'])
         
-        if(k==0):
-            print(model.summary())
-        
         history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
                             validation_data=(x_test, y_test), verbose=0)
         
-        print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
+        # if(k==0):
+        #     print(model.summary())
+        
+        # print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
         
         # print('\nacc: ', history.history['accuracy'])
         # print('val acc: ', history.history['val_accuracy'])
-        print(history.history['val_accuracy'])
-        print('MAX', max(history.history['val_accuracy']),'\n')
-        expdata[trait_labels[trait_idx]].append(max(history.history['val_accuracy']))
         # print('loss: ', history.history['loss'])
         # print('val loss: ', history.history['val_loss'])
-
-        print(timedelta(seconds=int(time.time() - start)), end=' ')
+        expdata['acc'].append(max(history.history['val_accuracy']))
 
 # print(expdata)
 # for trait in fold_acc.keys():
 #     fold_acc[trait] = np.mean(fold_acc[trait])
+
+print (expdata)
 
 df = pd.DataFrame.from_dict(expdata)
 
