@@ -2,7 +2,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 import numpy as np
 import csv
 import re
@@ -10,16 +10,25 @@ import pickle
 import time
 from datetime import timedelta
 import pandas as pd
+from pathlib import Path
 
-import utils.gen_utils as utils
+import sys
+sys.path.insert(0,'/nfs/ghome/live/yashm/Desktop/research/personality/utils')
 
-inp_dir, dataset_type, _, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
-print('{} : {} : {} : {} : {}'.format(dataset_type, embed, layer, mode, embed_mode))
+import gen_utils as utils
+
+inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
+# embed_mode {mean, cls}
+# mode {512_head, 512_tail, 256_head_tail}
+network = 'MLP'
+print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
+seed = jobid
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
 start = time.time()
+path = 'explogs/'
 
 def merge_features(embedding, other_features):
     df = pd.merge(embedding, other_features, left_index=True, right_index=True)
@@ -33,7 +42,7 @@ elif (re.search(r'large', embed)):
     n_hl = 24
     hidden_dim = 1024
 
-file = open(inp_dir + dataset_type + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
+file = open(inp_dir + dataset + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
 
 data = pickle.load(file)
 author_ids, data_x, data_y = list(zip(*data))
@@ -63,53 +72,73 @@ full_targets = np.array(targets)
 
 trait_labels = ['EXT','NEU','AGR','CON','OPN']
 fold_acc = {}
+expdata = {}
+
+model = tf.keras.models.Sequential()
+
+# define the neural network architecture
+model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
+# model.add(tf.keras.layers.Dense(50, activation='relu'))
+model.add(tf.keras.layers.Dense(n_classes))
+
+# model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
+
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+                loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                metrics=['mse', 'accuracy'])
+                
 for trait_idx in range(full_targets.shape[1]):
     # convert targets to one-hot encoding
-    targets = tf.keras.utils.to_categorical(full_targets[:, trait_idx], num_classes=n_classes)
+    targets = full_targets[:, trait_idx]
     n_data = targets.shape[0]
-    fold_acc[trait_labels[trait_idx]] = []
-    kf = KFold(n_splits=10, shuffle=True, random_state=0)
+    expdata[trait_labels[trait_idx]] = []
+    expdata['fold'] = np.arange(1,11)
+
+    skf = StratifiedKFold(n_splits=10, shuffle=False)
     k = -1
-    for train_index, test_index in kf.split(inputs):
-        X_train, X_test = inputs[train_index], inputs[test_index]
+    for train_index, test_index in skf.split(inputs, targets):
+        x_train, x_test = inputs[train_index], inputs[test_index]
         y_train, y_test = targets[train_index], targets[test_index]
+        #converting to one-hot embedding
+        y_train = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
+        y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
+
         k+=1
-        model = tf.keras.models.Sequential()
-
-        # define the neural network architecture
-        model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
-        # model.add(tf.keras.layers.Dense(50, activation='relu'))
-        model.add(tf.keras.layers.Dense(n_classes))
-
-        # model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
-
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                      metrics=['mse', 'accuracy'])
+        
         if(k==0):
             print(model.summary())
         
-        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                            validation_data=(X_test, y_test), verbose=0)
+        history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
+                            validation_data=(x_test, y_test), verbose=0)
         
         print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
         
         # print('\nacc: ', history.history['accuracy'])
         # print('val acc: ', history.history['val_accuracy'])
-        # print('MAX', max(history.history['val_accuracy']),'\n')
-        fold_acc[trait_labels[trait_idx]].append(max(history.history['val_accuracy']))
+        print(history.history['val_accuracy'])
+        print('MAX', max(history.history['val_accuracy']),'\n')
+        expdata[trait_labels[trait_idx]].append(max(history.history['val_accuracy']))
         # print('loss: ', history.history['loss'])
         # print('val loss: ', history.history['val_loss'])
 
         print(timedelta(seconds=int(time.time() - start)), end=' ')
 
-        if (write_file):
-            results_file = "MLP_t" + str(trait_idx) + '_results.csv'
-            meta_info = (lr, epochs, seed, embed, layer)
-            utils.file_writer(results_file, meta_info, history.history['val_accuracy'], history.history['val_loss'], str(k))
+# print(expdata)
+# for trait in fold_acc.keys():
+#     fold_acc[trait] = np.mean(fold_acc[trait])
 
-print(fold_acc)
-for trait in fold_acc.keys():
-    fold_acc[trait] = np.mean(fold_acc[trait])
+df = pd.DataFrame.from_dict(expdata)
 
-print(fold_acc)
+df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
+                                                                    dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+
+pd.set_option('display.max_columns', None)
+print(df.head(5))
+
+# save the results of our experiment
+if(log_expdata):
+    Path(path).mkdir(parents=True, exist_ok=True)
+    if(not os.path.exists(path + 'expdata.csv')):
+        df.to_csv(path + 'expdata.csv', mode='a', header=True)
+    else:
+        df.to_csv(path + 'expdata.csv', mode='a', header=False)
