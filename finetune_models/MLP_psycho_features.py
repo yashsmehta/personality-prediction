@@ -13,9 +13,10 @@ from sklearn.model_selection import StratifiedKFold
 from scipy.io import arff
 
 import sys
-sys.path.insert(0,'/nfs/ghome/live/yashm/Desktop/research/personality/utils')
 
-import gen_utils as utils
+sys.path.insert(0, '/nfs/ghome/live/yashm/Desktop/research/personality/utils')
+
+import utils.gen_utils as utils
 
 log_expdata = False
 epochs = 3
@@ -30,9 +31,10 @@ print(network)
 mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
 
 np.random.seed(seed)
-tf.random.set_seed(seed)
+# tf.random.set_seed(seed)
 
 start = time.time()
+
 
 def read_and_process(path):
     arff = open(path, 'r')
@@ -68,6 +70,7 @@ def read_and_process(path):
     df = df.sort_index()
     return df
 
+
 def sentence_preprocess(sentence):
     sentence = p.clean(sentence)
     # Remove hyperlinks
@@ -85,14 +88,16 @@ def sentence_preprocess(sentence):
 def load_features(dir, dataset):
     idx = 'id'
     if dataset == 'kaggle':
-        drop_cols = ['BROWN-FREQ numeric', 'K-F-FREQ numeric', 'K-F-NCATS numeric', 'K-F-NSAMP numeric', 'T-L-FREQ numeric', 'Extraversion numeric'
-                  , '\'Emotional stability\' numeric', 'Agreeableness numeric', 'Conscientiousness numeric', '\'Openness to experience\' numeric']
+        drop_cols = ['BROWN-FREQ numeric', 'K-F-FREQ numeric', 'K-F-NCATS numeric', 'K-F-NSAMP numeric',
+                     'T-L-FREQ numeric', 'Extraversion numeric'
+            , '\'Emotional stability\' numeric', 'Agreeableness numeric', 'Conscientiousness numeric',
+                     '\'Openness to experience\' numeric']
         mairesse = read_and_process(dir + dataset + '_mairesse_labeled.arff')
         mairesse = mairesse.drop(drop_cols, axis=1)
     elif dataset == 'essays':
         idx = '#AUTHID'
         mairesse = pd.read_csv(dir + dataset + '_mairesse_labeled.csv')
-    # mairesse = mairesse.set_index(mairesse.columns[0])
+        mairesse = mairesse.set_index(mairesse.columns[0])
     nrc = pd.read_csv(dir + dataset + '_nrc.csv').set_index([idx])
     # nrc = nrc.sort_values(by=['id'])
     # nrc = nrc.drop(['id'], axis=1)
@@ -129,7 +134,7 @@ def load_essays_df(datafile):
 
 
 def load_Kaggle_df(datafile):
-    with open(datafile, "rt") as csvf:
+    with open(datafile, "rt", encoding='utf8') as csvf:
         csvreader = csv.reader(csvf, delimiter=',', quotechar='"')
         first_line = True
         df = pd.DataFrame(columns=["user", "text", "E", "N", "F", "J"])
@@ -154,8 +159,9 @@ def load_Kaggle_df(datafile):
 
     return df
 
+
 def get_psycholinguist_data(dump_data, dataset):
-    features = load_features('data/'+dataset+'/psycholinguist_features/', dataset)
+    features = load_features('../data/' + dataset + '/psycholinguist_features/', dataset)
     feature_flags = [nrc, nrc_vad, readability, mairesse]
     first = 1
     for feature, feature_flag in zip(features, feature_flags):
@@ -178,9 +184,10 @@ def get_psycholinguist_data(dump_data, dataset):
     feature_names = merged.columns
     return data, full_targets, feature_names
 
+
 if __name__ == "__main__":
     if dataset == 'essays':
-        dump_data = load_essays_df('data/essays/essays.csv')
+        dump_data = load_essays_df('../data/essays/essays.csv')
         labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
     elif dataset == 'kaggle':
         dump_data = load_Kaggle_df('../data/kaggle/kaggle.csv')
@@ -194,19 +201,19 @@ if __name__ == "__main__":
     print(full_targets.shape)
     print(feature_names)
     print('starting k-fold cross validation...')
-    trait_labels = ['EXT','NEU','AGR','CON','OPN']
+    trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
     n_splits = 10
     fold_acc = {}
     expdata = {}
-    expdata['acc'], expdata['trait'], expdata['fold'] = [],[],[]
+    expdata['acc'], expdata['trait'], expdata['fold'] = [], [], []
 
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
         targets = full_targets[:, trait_idx]
         n_data = targets.shape[0]
-        
+
         expdata['trait'].extend([trait_labels[trait_idx]] * n_splits)
-        expdata['fold'].extend(np.arange(1,n_splits+1))
+        expdata['fold'].extend(np.arange(1, n_splits + 1))
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=False)
         k = -1
@@ -214,7 +221,7 @@ if __name__ == "__main__":
         for train_index, test_index in skf.split(inputs, targets):
             x_train, x_test = inputs[train_index], inputs[test_index]
             y_train, y_test = targets[train_index], targets[test_index]
-            #converting to one-hot embedding
+            # converting to one-hot embedding
             y_train = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
             y_test = tf.keras.utils.to_categorical(y_test, num_classes=n_classes)
             model = tf.keras.models.Sequential()
@@ -226,19 +233,19 @@ if __name__ == "__main__":
 
             # model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
 
-            k+=1
+            k += 1
             model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-                    loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                    metrics=['mse', 'accuracy'])
-            
+                          loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                          metrics=['mse', 'accuracy'])
+
             history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
                                 validation_data=(x_test, y_test), verbose=0)
-            
+
             # if(k==0):
             #     print(model.summary())
-            
+
             # print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
-            
+
             # print('\nacc: ', history.history['accuracy'])
             print('val acc: ', history.history['val_accuracy'])
             # print('loss: ', history.history['loss'])
@@ -249,22 +256,23 @@ if __name__ == "__main__":
 
     df = pd.DataFrame.from_dict(expdata)
 
-    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
-                                                                        dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df[
+        'embed_mode'], df['jobid'] = network, \
+                                     dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
 
     pd.set_option('display.max_columns', None)
     print(df.head(5))
 
     # save the results of our experiment
-    if(log_expdata):
+    if (log_expdata):
         Path(path).mkdir(parents=True, exist_ok=True)
-        if(not os.path.exists(path + 'expdata.csv')):
+        if (not os.path.exists(path + 'expdata.csv')):
             df.to_csv(path + 'expdata.csv', mode='a', header=True)
         else:
             df.to_csv(path + 'expdata.csv', mode='a', header=False)
-    
+
     # file = open('MLP_other_features_results_'+dataset+'.txt', 'a')
-    
+
     # for trait_idx in range(full_targets.shape[1]):
     #     targets = full_targets[:, trait_idx]
     #     targets = tf.keras.utils.to_categorical(targets, num_classes=n_classes)
