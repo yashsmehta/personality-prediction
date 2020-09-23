@@ -23,7 +23,7 @@ import utils.linguistic_features_utils as feature_utils
 
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 
-input_dim = 123
+features_dim = 123
 embed = 'psycholinguist features'
 layer = ''
 path = 'explogs/'
@@ -42,10 +42,10 @@ start = time.time()
 if __name__ == "__main__":
     if dataset == 'essays':
         dump_data = dataset_processors.load_essays_df('data/essays/essays.csv')
-        labels_list = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
+        trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
     elif dataset == 'kaggle':
         dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
-        labels_list = ['E', 'N', 'F', 'J']
+        trait_labels = ['E', 'N', 'F', 'J']
     print('dataset loaded! Getting psycholinguistic features...')
     inputs, full_targets, feature_names = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
     inputs = np.array(inputs)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     print(full_targets.shape)
     print(feature_names)
     print('starting k-fold cross validation...')
-    trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
+    
     n_splits = 10
     fold_acc = {}
     expdata = {}
@@ -81,7 +81,7 @@ if __name__ == "__main__":
             model = tf.keras.models.Sequential()
 
             # define the neural network architecture
-            model.add(tf.keras.layers.Dense(50, input_dim=input_dim, activation='relu'))
+            model.add(tf.keras.layers.Dense(50, input_dim=features_dim, activation='relu'))
             # model.add(tf.keras.layers.Dense(50, activation='relu'))
             model.add(tf.keras.layers.Dense(n_classes))
 

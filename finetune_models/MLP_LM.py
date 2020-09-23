@@ -71,6 +71,10 @@ inputs = np.array(inputs)
 full_targets = np.array(targets)
 
 trait_labels = ['EXT','NEU','AGR','CON','OPN']
+
+if(dataset == 'kaggle'):
+    trait_labels = ['E', 'N', 'F', 'J']
+
 n_splits = 10
 fold_acc = {}
 expdata = {}
@@ -98,8 +102,6 @@ for trait_idx in range(full_targets.shape[1]):
         model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
         # model.add(tf.keras.layers.Dense(50, activation='relu'))
         model.add(tf.keras.layers.Dense(n_classes))
-
-        # model.add(tf.keras.layers.Dense(n_classes, input_dim=hidden_dim))
 
         k+=1
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
