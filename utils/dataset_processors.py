@@ -5,6 +5,22 @@ import csv
 import preprocessor as p
 import math
 
+def preprocess_text(sentence):
+    # remove hyperlinks, hashtags, smileys, emojies
+    sentence = p.clean(sentence)
+    # Remove hyperlinks
+    sentence = re.sub(r'http\S+', ' ', sentence)
+    # Remove punctuations and numbers
+    # sentence = re.sub('[^a-zA-Z]', ' ', sentence)
+    # sentence = re.sub('[^a-zA-Z.?!,]', ' ', sentence)
+    # # Single character removal (except I)
+    # sentence = re.sub(r"\s+[a-zA-HJ-Z]\s+", ' ', sentence)
+    # Removing multiple spaces
+    sentence = re.sub(r'\s+', ' ', sentence)
+
+    return sentence
+
+
 def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
         csvreader = csv.reader(csvf, delimiter=',', quotechar='"')
@@ -125,6 +141,7 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
     targets = []
     token_len = []
     input_ids = []
+    author_ids = []
 
     df = load_Kaggle_df(datafile)
     cnt = 0
@@ -135,7 +152,7 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
         token_len.append(len(tokens))
         token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
         if (cnt < 10):
-            print(tokens)
+            print(tokens[:10])
 
         input_ids.append(token_ids)
         targets.append([df['E'][ind], df['N'][ind], df['F'][ind], df['J'][ind]])
@@ -143,10 +160,9 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
         cnt += 1
     print('token lengths : ', token_len)
     print('average length : ', int(np.mean(token_len)))
-    author_ids = np.array(df.index)
+    author_ids = np.array(author_ids)
 
     return author_ids, input_ids, targets
-
 
 def load_pandora_df(datafile):
     # load posts_df in a proper [author,100 most recent posts] format

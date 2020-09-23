@@ -15,8 +15,8 @@ from utils.data_utils import MyMapDataset
 
 start = time.time()
 # argument extractor
-dataset_type, token_length, datafile, batch_size, embed, op_dir, mode, embed_mode = utils.parse_args_extractor()
-print('{} : {} : {} : {} : {}'.format(dataset_type, embed, token_length, mode, embed_mode))
+dataset, token_length, batch_size, embed, op_dir, mode, embed_mode = utils.parse_args_extractor()
+print('{} : {} : {} : {} : {}'.format(dataset, embed, token_length, mode, embed_mode))
 
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
@@ -56,10 +56,10 @@ model_class, tokenizer_class, pretrained_weights = MODEL
 model = model_class.from_pretrained(pretrained_weights, output_hidden_states=True)  # output_attentions=False
 tokenizer = tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=True)
 
-# create a class which can be passed to the pyTorch dataloader. responsible for returning tokenized and encoded values of the Essays dataset
+# create a class which can be passed to the pyTorch dataloader. responsible for returning tokenized and encoded values of the dataset
 # this class will have __getitem__(self,idx) function which will return input_ids and target values
-# currently it is just returning the targets for the 'OPN' trait - need to generalize this
-map_dataset = MyMapDataset(dataset_type, datafile, tokenizer, token_length, DEVICE, mode)
+
+map_dataset = MyMapDataset(dataset, tokenizer, token_length, DEVICE, mode)
 
 data_loader = DataLoader(dataset=map_dataset,
                          batch_size=batch_size,
@@ -121,12 +121,12 @@ for author_ids, input_ids, targets in data_loader:
         
 # storing the embeddings into a pickle file
 
-file = open(op_dir + dataset_type + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
+file = open(op_dir + dataset + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
 pickle.dump(zip(all_author_ids, hidden_features, all_targets), file)
 file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
-print('extracting embeddings for {} dataset: DONE!'.format(dataset_type))
+print('extracting embeddings for {} dataset: DONE!'.format(dataset))
 
 # input_ids = input_ids.cpu().numpy()
 # subdoc_input_ids = torch.from_numpy(subdoc_input_ids).long().to(DEVICE)
