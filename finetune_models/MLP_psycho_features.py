@@ -9,6 +9,7 @@ import pandas as pd
 import tensorflow as tf
 import re
 import preprocessor as p
+from pathlib import Path
 from sklearn.model_selection import StratifiedKFold
 from scipy.io import arff
 
@@ -24,6 +25,7 @@ inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed
 
 input_dim = 123
 embed = 'psycholinguist features'
+layer = ''
 path = 'explogs/'
 n_classes = 2
 network = 'MLP'
