@@ -31,7 +31,7 @@ n_classes = 2
 network = 'MLP'
 print(network)
 
-mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
+nrc, nrc_vad, readability, mairesse = [True, True, True, True]
 feature_flags = [nrc, nrc_vad, readability, mairesse]
 
 np.random.seed(jobid)
