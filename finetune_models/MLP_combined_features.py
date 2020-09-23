@@ -68,6 +68,9 @@ for ii in range(n_batches):
     inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
     targets.extend(data_y[ii])
 
+print('inputs shape: ', np.array(inputs).shape)
+print('orders shape: ', np.array(orders).shape)
+
 inputs = pd.DataFrame(np.array(inputs))
 inputs['order'] = orders[0]
 inputs = inputs.set_index(['order'])
