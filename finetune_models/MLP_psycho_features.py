@@ -176,11 +176,12 @@ def get_psycholinguist_data(dump_data, dataset):
     if dataset == 'kaggle':
         labels = dump_data[['user', 'E', 'N', 'F', 'J']]
     labels = labels.set_index('user')
-    labels.index = pd.to_numeric(labels.index, errors='coerce')
-    df.index = pd.to_numeric(df.index, errors='coerce')
+    # labels.index = pd.to_numeric(labels.index, errors='coerce')
+    # df.index = pd.to_numeric(df.index, errors='coerce')
     merged = pd.merge(df, labels, left_index=True, right_index=True).fillna(0)
-    data = merged[merged.columns[:-4]].values
-    full_targets = merged[merged.columns[-4:]].values
+    label_size = labels.shape[1]
+    data = merged[merged.columns[:(-1*label_size)]].values
+    full_targets = merged[merged.columns[(-1*label_size):]].values
     feature_names = merged.columns
     return data, full_targets, feature_names
 
