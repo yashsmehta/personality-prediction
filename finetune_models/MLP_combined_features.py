@@ -14,11 +14,13 @@ import pandas as pd
 import utils.gen_utils as utils
 import utils.dataset_processors as dataset_processors
 import utils.linguistic_features_utils as feature_utils
+from utils.train_helper import prepare_model_inputs
 
-inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
+inp_dir, dataset, lr, batch_size, epochs, log_expdata, MODEL_INPUT, embed, layer, mode, embed_mode, jobid = utils.parse_args()
+meta_data = [inp_dir, dataset, lr, batch_size, epochs, log_expdata, MODEL_INPUT, embed, layer, mode, embed_mode, jobid]
+
 print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
-features_dim = 123
 network = 'MLP'
 np.random.seed(jobid)
 tf.random.set_seed(jobid)
@@ -27,63 +29,6 @@ nrc, nrc_vad, readability, mairesse = [True, True, True, True]
 feature_flags = [nrc, nrc_vad, readability, mairesse]
 
 start = time.time()
-
-def merge_features(embedding, other_features, full_targets):
-    orders = pd.read_csv('data/essays/author_id_order.csv').set_index(['order'])
-    df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
-    df = pd.merge(df, other_features, left_index=True, right_index=True)
-    # df = pd.merge(df, full_targets, left_index=True, right_index=True)
-    # df = df.drop(['index'], axis=1)
-    data_arr = df[df.columns[:-len(trait_labels)]].values
-    targets_arr = df[df.columns[-len(trait_labels):]].values
-    return data_arr, targets_arr
-
-
-if (re.search(r'base', embed)):
-    n_hl = 12
-    features_dim += 768
-
-elif (re.search(r'large', embed)):
-    n_hl = 24
-    features_dim += 1024
-
-file = open(inp_dir + dataset + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
-
-data = pickle.load(file)
-orders, data_x, data_y = list(zip(*data))
-file.close()
-
-# alphaW is responsible for which BERT layer embedding we will be using
-if (layer == 'all'):
-    alphaW = np.full([n_hl], 1 / n_hl)
-
-else:
-    alphaW = np.zeros([n_hl])
-    alphaW[int(layer) - 1] = 1
-
-# just changing the way data is stored (tuples of minibatches) and getting the output for the required layer of BERT using alphaW
-# data_x[ii].shape = (12, batch_size, 768)
-inputs = []
-targets = []
-author_ids = []
-
-n_batches = len(data_y)
-print(len(orders))
-
-for ii in range(n_batches):
-    inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
-    targets.extend(data_y[ii])
-    author_ids.extend(orders[ii])
-
-print('inputs shape: ', np.array(inputs).shape)
-print('author_ids shape: ', np.array(author_ids).shape)
-
-inputs = pd.DataFrame(np.array(inputs))
-inputs['order'] = author_ids
-inputs = inputs.set_index(['order'])
-full_targets = pd.DataFrame(np.array(targets))
-full_targets['order'] = author_ids
-full_targets = full_targets.set_index(['order'])
 
 if dataset == 'essays':
     # dump_data = pd.read_csv('data/essays/essays.csv', index_col='#AUTHID')
@@ -95,8 +40,7 @@ elif dataset == 'kaggle':
     dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
     trait_labels = ['E', 'N', 'F', 'J']
 
-other_features_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
-inputs, full_targets = merge_features(inputs, other_features_df, full_targets)
+inputs, full_targets, n_hl, features_dim = prepare_model_inputs(meta_data)
 
 n_splits = 10
 fold_acc = {}

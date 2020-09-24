@@ -42,6 +42,7 @@ def parse_args():
     ap.add_argument("-epochs", type=int, default=10)
     # ap.add_argument("-seed", type=int, default=np.random.randint(0,1000))
     ap.add_argument('-log_expdata', type=str_to_bool, nargs='?', const=True, default=True)
+    ap.add_argument("-model_input", type=str, default='LM_features')
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-layer", type=str, default='11')
     ap.add_argument("-mode", type=str, default=None)
@@ -49,7 +50,7 @@ def parse_args():
     ap.add_argument("-jobid", type=int, default=0)
     args = ap.parse_args()
     return args.inp_dir, args.dataset, args.lr, args.batch_size, args.epochs,\
-           args.log_expdata, args.embed, args.layer, args.mode, args.embed_mode, args.jobid
+           args.log_expdata, args.model_input, args.embed, args.layer, args.mode, args.embed_mode, args.jobid
 
 
 def parse_args_extractor():
