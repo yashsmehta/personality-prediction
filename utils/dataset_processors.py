@@ -69,7 +69,8 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
         df.at[ind, 'token_len'] = len(tokens)
     
     df.sort_values(by=['token_len', 'user'],inplace=True, ascending=True)
-    
+    tmp_df = df['user']
+    tmp_df.to_csv('author_id_order.csv', index_label='order')
     print(df['token_len'].mean())
 
     for ii in range(len(df)):

@@ -30,9 +30,11 @@ start = time.time()
 
 
 def merge_features(embedding, other_features, full_targets):
-    df = pd.merge(embedding, other_features, left_index=True, right_index=True)
-    df = pd.merge(df, full_targets, left_index=True, right_index=True)
-    df = df.drop(['index'], axis=1)
+    orders = pd.read_csv('../author_id_order.csv').set_index(['order'])
+    df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
+    df = pd.merge(df, other_features, left_index=True, right_index=True)
+    # df = pd.merge(df, full_targets, left_index=True, right_index=True)
+    # df = df.drop(['index'], axis=1)
     data_arr = df[df.columns[:-len(trait_labels)]].values
     targets_arr = df[df.columns[-len(trait_labels):]].values
     return data_arr, targets_arr
