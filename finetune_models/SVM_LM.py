@@ -21,7 +21,7 @@ import utils.gen_utils as utils
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 # embed_mode {mean, cls}
 # mode {512_head, 512_tail, 256_head_tail}
-network = 'MLP'
+network = 'SVM'
 MODEL_INPUT = 'LM_features'
 print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
