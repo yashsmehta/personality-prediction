@@ -14,6 +14,7 @@ import pandas as pd
 import utils.gen_utils as utils
 import utils.dataset_processors as dataset_processors
 import utils.linguistic_features_utils as feature_utils
+from sklearn.model_selection import StratifiedKFold
 
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
@@ -29,8 +30,11 @@ feature_flags = [nrc, nrc_vad, readability, mairesse]
 start = time.time()
 
 def merge_features(embedding, other_features, full_targets):
-    orders = pd.read_csv('data/essays/author_id_order.csv').set_index(['order'])
-    df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
+    if dataset == 'essays':
+        orders = pd.read_csv('data/essays/author_id_order.csv').set_index(['order'])
+        df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
+    else:
+        df = embedding
     df = pd.merge(df, other_features, left_index=True, right_index=True)
     # df = pd.merge(df, full_targets, left_index=True, right_index=True)
     # df = df.drop(['index'], axis=1)
