@@ -21,6 +21,7 @@ inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed
 # embed_mode {mean, cls}
 # mode {512_head, 512_tail, 256_head_tail}
 network = 'MLP'
+MODEL_INPUT = 'LM_features'
 print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
 seed = jobid
@@ -117,7 +118,7 @@ for trait_idx in range(full_targets.shape[1]):
         # print('fold : {} \ntrait : {}\n'.format(k+1, trait_labels[trait_idx]))
         
         # print('\nacc: ', history.history['accuracy'])
-        print('val acc: ', history.history['val_accuracy'])
+        # print('val acc: ', history.history['val_accuracy'])
         # print('loss: ', history.history['loss'])
         # print('val loss: ', history.history['val_loss'])
         expdata['acc'].append(100 * max(history.history['val_accuracy']))
@@ -130,8 +131,8 @@ print (expdata)
 
 df = pd.DataFrame.from_dict(expdata)
 
-df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
-                                                                    dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['model_input'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
+                                                                    dataset, lr, batch_size, epochs, MODEL_INPUT, embed, layer, mode, embed_mode, jobid
 
 pd.set_option('display.max_columns', None)
 print(df.head(5))

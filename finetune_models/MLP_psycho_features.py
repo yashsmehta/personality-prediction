@@ -24,7 +24,7 @@ import utils.linguistic_features_utils as feature_utils
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 
 features_dim = 123
-embed = 'psycholinguist features'
+MODEL_INPUT = 'psycholinguist_features'
 layer = ''
 path = 'explogs/'
 n_classes = 2
@@ -103,8 +103,8 @@ if __name__ == "__main__":
 
     df = pd.DataFrame.from_dict(expdata)
 
-    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], 
-    df['embed_mode'], df['jobid'] = network, dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['model_input'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
+                                                                    dataset, lr, batch_size, epochs, MODEL_INPUT, embed, layer, mode, embed_mode, jobid
 
     pd.set_option('display.max_columns', None)
     print(df.head(5))
