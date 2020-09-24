@@ -122,7 +122,9 @@ for author_ids, input_ids, targets in data_loader:
 # storing the embeddings into a pickle file
 
 file = open(op_dir + dataset + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
-pickle.dump(zip(all_author_ids, hidden_features, all_targets), file)
+tmp = zip(all_author_ids, hidden_features, all_targets)
+tmp = list(tmp)
+pickle.dump(tmp, file)
 file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
@@ -130,4 +132,3 @@ print('extracting embeddings for {} dataset: DONE!'.format(dataset))
 
 # input_ids = input_ids.cpu().numpy()
 # subdoc_input_ids = torch.from_numpy(subdoc_input_ids).long().to(DEVICE)
-                
