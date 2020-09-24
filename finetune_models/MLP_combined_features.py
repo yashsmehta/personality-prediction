@@ -22,6 +22,7 @@ print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
 features_dim = 123
 MODEL_INPUT = 'combined_features'
+path = 'explogs/'
 network = 'MLP'
 np.random.seed(jobid)
 tf.random.set_seed(jobid)
