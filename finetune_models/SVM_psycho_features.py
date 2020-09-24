@@ -26,10 +26,11 @@ import utils.linguistic_features_utils as feature_utils
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 
 features_dim = 123
-embed = 'psycholinguist features'
+# embed = 'psycholinguist features'
 layer = ''
 path = 'explogs/'
 n_classes = 2
+MODEL_INPUT = 'psycholinguist_features'
 network = 'SVM'
 print(network)
 
@@ -57,7 +58,7 @@ if __name__ == "__main__":
         dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
         trait_labels = ['E', 'N', 'F', 'J']
     print('dataset loaded! Getting psycholinguistic features...')
-    inputs, full_targets, feature_names = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
+    inputs, full_targets, feature_names, _ = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
     inputs = np.array(inputs)
     full_targets = np.array(full_targets)
 
@@ -85,19 +86,20 @@ if __name__ == "__main__":
         for train_index, test_index in skf.split(inputs, targets):
             x_train, x_test = inputs[train_index], inputs[test_index]
             y_train, y_test = targets[train_index], targets[test_index]
+            k += 1
             acc = classification(x_train, x_test, y_train, y_test,
                              'SVM-' + dataset + '-' + embed + '-' + str(k) + "_t" + str(trait_idx))
             print(acc)
             expdata['acc'].append(acc)
-            k += 1
+
 
     print (expdata)
 
     df = pd.DataFrame.from_dict(expdata)
 
-    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df[
-        'embed_mode'], df['jobid'] = network, \
-                                     dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['model_input'], df['embed'], df['layer'], \
+    df['mode'], df['embed_mode'], df['jobid'] = network, \
+                                                dataset, lr, batch_size, epochs, MODEL_INPUT, embed, layer, mode, embed_mode, jobid
 
     pd.set_option('display.max_columns', None)
     print(df.head(5))
