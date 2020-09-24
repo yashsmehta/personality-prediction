@@ -85,7 +85,7 @@ trait_labels = ['EXT','NEU','AGR','CON','OPN']
 if(dataset == 'kaggle'):
     trait_labels = ['E', 'N', 'F', 'J']
 
-n_splits = 2
+n_splits = 10
 fold_acc = {}
 expdata = {}
 expdata['acc'], expdata['trait'], expdata['fold'] = [],[],[]
