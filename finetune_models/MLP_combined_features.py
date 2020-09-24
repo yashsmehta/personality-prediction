@@ -2,7 +2,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 import numpy as np
 import csv
 import re
@@ -28,9 +28,8 @@ feature_flags = [nrc, nrc_vad, readability, mairesse]
 
 start = time.time()
 
-
 def merge_features(embedding, other_features, full_targets):
-    orders = pd.read_csv('../author_id_order.csv').set_index(['order'])
+    orders = pd.read_csv('data/essays/author_id_order.csv').set_index(['order'])
     df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
     df = pd.merge(df, other_features, left_index=True, right_index=True)
     # df = pd.merge(df, full_targets, left_index=True, right_index=True)
@@ -42,11 +41,11 @@ def merge_features(embedding, other_features, full_targets):
 
 if (re.search(r'base', embed)):
     n_hl = 12
-    hidden_dim = 768
+    features_dim += 768
 
 elif (re.search(r'large', embed)):
     n_hl = 24
-    hidden_dim = 1024
+    features_dim += 1024
 
 file = open(inp_dir + dataset + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'rb')
 
@@ -83,7 +82,7 @@ inputs = pd.DataFrame(np.array(inputs))
 inputs['order'] = author_ids
 inputs = inputs.set_index(['order'])
 full_targets = pd.DataFrame(np.array(targets))
-full_targets['order'] = author_ids[0]
+full_targets['order'] = author_ids
 full_targets = full_targets.set_index(['order'])
 
 if dataset == 'essays':
@@ -123,7 +122,7 @@ for trait_idx in range(full_targets.shape[1]):
         model = tf.keras.models.Sequential()
 
         # define the neural network architecture
-        model.add(tf.keras.layers.Dense(50, input_dim=hidden_dim, activation='relu'))
+        model.add(tf.keras.layers.Dense(50, input_dim=features_dim, activation='relu'))
         # model.add(tf.keras.layers.Dense(50, activation='relu'))
         model.add(tf.keras.layers.Dense(n_classes))
 

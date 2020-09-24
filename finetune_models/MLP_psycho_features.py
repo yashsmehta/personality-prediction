@@ -94,7 +94,7 @@ if __name__ == "__main__":
             history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
                                 validation_data=(x_test, y_test), verbose=0)
 
-            print('val acc: ', history.history['val_accuracy'])
+            # print('val acc: ', history.history['val_accuracy'])
             # print('loss: ', history.history['loss'])
             # print('val loss: ', history.history['val_loss'])
             expdata['acc'].append(100 * max(history.history['val_accuracy']))
