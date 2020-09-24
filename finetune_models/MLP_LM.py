@@ -120,7 +120,7 @@ for trait_idx in range(full_targets.shape[1]):
         print('val acc: ', history.history['val_accuracy'])
         # print('loss: ', history.history['loss'])
         # print('val loss: ', history.history['val_loss'])
-        expdata['acc'].append(max(history.history['val_accuracy']))
+        expdata['acc'].append(100 * max(history.history['val_accuracy']))
 
 # print(expdata)
 # for trait in fold_acc.keys():

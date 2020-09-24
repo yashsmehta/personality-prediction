@@ -97,15 +97,14 @@ if __name__ == "__main__":
             print('val acc: ', history.history['val_accuracy'])
             # print('loss: ', history.history['loss'])
             # print('val loss: ', history.history['val_loss'])
-            expdata['acc'].append(max(history.history['val_accuracy']))
+            expdata['acc'].append(100 * max(history.history['val_accuracy']))
 
     print (expdata)
 
     df = pd.DataFrame.from_dict(expdata)
 
-    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], df[
-        'embed_mode'], df['jobid'] = network, \
-                                     dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
+    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['embed'], df['layer'], df['mode'], 
+    df['embed_mode'], df['jobid'] = network, dataset, lr, batch_size, epochs, embed, layer, mode, embed_mode, jobid
 
     pd.set_option('display.max_columns', None)
     print(df.head(5))

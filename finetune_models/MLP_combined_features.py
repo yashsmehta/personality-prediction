@@ -19,6 +19,7 @@ inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed
 print('{} : {} : {} : {} : {}'.format(dataset, embed, layer, mode, embed_mode))
 n_classes = 2
 features_dim = 123
+network = 'MLP'
 np.random.seed(jobid)
 tf.random.set_seed(jobid)
 
@@ -136,7 +137,7 @@ for trait_idx in range(full_targets.shape[1]):
         print('val acc: ', history.history['val_accuracy'])
         # print('loss: ', history.history['loss'])
         # print('val loss: ', history.history['val_loss'])
-        expdata['acc'].append(max(history.history['val_accuracy']))
+        expdata['acc'].append(100 * max(history.history['val_accuracy']))
 
 print (expdata)
 
