@@ -22,7 +22,7 @@ class MyMapDataset(Dataset):
         elif dataset == 'pandora':
             author_ids, input_ids, targets = dataset_processors.pandora_embeddings(datafile, tokenizer, token_length)
 
-        author_ids = torch.from_numpy(np.array(author_ids))
+        author_ids = torch.from_numpy(np.array(author_ids)).long().to(DEVICE)
         input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)
         targets = torch.from_numpy(np.array(targets))
 

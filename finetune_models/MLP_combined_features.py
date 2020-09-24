@@ -61,33 +61,37 @@ else:
 # data_x[ii].shape = (12, batch_size, 768)
 inputs = []
 targets = []
+author_ids = []
 
 n_batches = len(data_y)
+print(len(orders))
 
 for ii in range(n_batches):
     inputs.extend(np.einsum('k,kij->ij', alphaW, data_x[ii]))
     targets.extend(data_y[ii])
+    author_ids.extend(orders[ii])
 
 print('inputs shape: ', np.array(inputs).shape)
-print('orders shape: ', np.array(orders).shape)
+print('author_ids shape: ', np.array(author_ids).shape)
 
 inputs = pd.DataFrame(np.array(inputs))
-inputs['order'] = orders[0]
+inputs['order'] = author_ids[0]
 inputs = inputs.set_index(['order'])
 full_targets = pd.DataFrame(np.array(targets))
-full_targets['order'] = orders[0]
+full_targets['order'] = author_ids[0]
 full_targets = full_targets.set_index(['order'])
 
 if dataset == 'essays':
-    dump_data = pd.read_csv('data/essays/essays.csv', index_col='#AUTHID')
+    # dump_data = pd.read_csv('data/essays/essays.csv', index_col='#AUTHID')
+    dump_data = dataset_processors.load_essays_df('data/essays/essays.csv')
     trait_labels = ['EXT','NEU','AGR','CON','OPN']
 
 elif dataset == 'kaggle':
     dump_data = pd.read_csv('data/kaggle/kaggle.csv', index_col='id')
     trait_labels = ['E', 'N', 'F', 'J']
 
-other_featers_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
-inputs, full_targets = merge_features(inputs, other_featers_df, full_targets)
+other_features_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
+inputs, full_targets = merge_features(inputs, other_features_df, full_targets)
 
 n_splits = 10
 fold_acc = {}

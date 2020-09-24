@@ -67,9 +67,9 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
     for ind in df.index:
         tokens = tokenizer.tokenize(df['text'][ind])
         df.at[ind, 'token_len'] = len(tokens)
-
-    df.sort_values(by=['token_len', 'user'], inplace=True, ascending=True)
-    print(df['token_len'])
+    
+    df.sort_values(by=['token_len', 'user'],inplace=True, ascending=True)
+    
     print(df['token_len'].mean())
 
     for ii in range(len(df)):
@@ -166,7 +166,7 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
         targets.append([df['E'][ind], df['N'][ind], df['F'][ind], df['J'][ind]])
         author_ids.append(int(df['user'][ind]))
         cnt += 1
-    print('token lengths : ', token_len)
+
     print('average length : ', int(np.mean(token_len)))
     author_ids = np.array(author_ids)
 

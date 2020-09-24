@@ -82,7 +82,7 @@ for author_ids, input_ids, targets in data_loader:
     with torch.no_grad():
         all_targets.append(targets.cpu().numpy())
         all_author_ids.append(author_ids.cpu().numpy())
-        
+
         if (mode == 'docbert'):
             # print(input_ids.shape)
             tmphidden_features = []
@@ -122,9 +122,8 @@ for author_ids, input_ids, targets in data_loader:
 # storing the embeddings into a pickle file
 
 file = open(op_dir + dataset + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
-tmp = zip(all_author_ids, hidden_features, all_targets)
-tmp = list(tmp)
-pickle.dump(tmp, file)
+
+pickle.dump(zip(all_author_ids, hidden_features, all_targets), file)
 file.close()
 
 print(timedelta(seconds=int(time.time() - start)), end=' ')
