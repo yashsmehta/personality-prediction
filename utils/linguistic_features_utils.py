@@ -103,4 +103,4 @@ def get_psycholinguist_data(dump_data, dataset, feature_flags):
     data = merged[merged.columns[:(-1*label_size)]].values
     full_targets = merged[merged.columns[(-1*label_size):]].values
     feature_names = merged.columns
-    return merged
+    return data, full_targets, feature_names, merged

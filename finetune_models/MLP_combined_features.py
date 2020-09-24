@@ -101,7 +101,7 @@ elif dataset == 'kaggle':
     dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
     trait_labels = ['E', 'N', 'F', 'J']
 
-other_features_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
+_, _, _, other_features_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
 inputs, full_targets = merge_features(inputs, other_features_df, full_targets)
 
 n_splits = 10

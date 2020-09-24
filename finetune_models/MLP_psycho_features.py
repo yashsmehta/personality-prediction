@@ -47,7 +47,7 @@ if __name__ == "__main__":
         dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
         trait_labels = ['E', 'N', 'F', 'J']
     print('dataset loaded! Getting psycholinguistic features...')
-    inputs, full_targets, feature_names = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
+    inputs, full_targets, feature_names, _ = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
     inputs = np.array(inputs)
     full_targets = np.array(full_targets)
 
