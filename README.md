@@ -1,5 +1,9 @@
 # Language Models and Automated Personality Prediction
-This repository is a set of experiments written in tensorflow + pytorch to explore automated personality detection using BERT on the Essays dataset which contains the Big-Five personality labelled traits
+
+This repository contains code for the paper [Bottom-Up and Top-Down: 
+Predicting Personality with Psycholinguistic and Language Model Features](https://sentic.net/predicting-personality-with-psycholinguistic-and-language-model-features.pdf), published in **IEEE International Conference of Data Mining 2020**.
+
+Here are a set of experiments written in tensorflow + pytorch to explore automated personality detection using Language Models on the Essays dataset (Big-Five personality labelled traits) and the Kaggle MBTI dataset.
 
 
 ## Installation
