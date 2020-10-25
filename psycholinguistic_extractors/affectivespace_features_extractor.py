@@ -1,10 +1,7 @@
 import pandas as pd
-import utils
+import utils.gen_utils as utils
 
 dataset_type, datafile, op_dir = utils.parse_args_metafeatures()
-from collections import Counter
-import readability
-import re
 
 
 def extract_sentic_features(x, sentic_df):
@@ -17,6 +14,7 @@ def extract_sentic_features(x, sentic_df):
     result /= result["count"]
     result = result.iloc[1:]
     return result
+
 
 if __name__ == "__main__":
     count_df = pd.read_pickle(datafile)

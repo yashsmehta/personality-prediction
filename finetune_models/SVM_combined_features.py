@@ -35,7 +35,7 @@ start = time.time()
 
 def merge_features(embedding, other_features, full_targets):
     if dataset == 'essays':
-        orders = pd.read_csv('data/essays/author_id_order.csv').set_index(['order'])
+        orders = pd.read_csv('../data/essays/author_id_order.csv').set_index(['order'])
         df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
     else:
         df = embedding
@@ -102,18 +102,18 @@ full_targets = full_targets.set_index(['order'])
 
 if dataset == 'essays':
     # dump_data = pd.read_csv('data/essays/essays.csv', index_col='#AUTHID')
-    dump_data = dataset_processors.load_essays_df('data/essays/essays.csv')
+    dump_data = dataset_processors.load_essays_df('../data/essays/essays.csv')
     trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
 
 elif dataset == 'kaggle':
     # dump_data = pd.read_csv('data/kaggle/kaggle.csv', index_col='id')
-    dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
+    dump_data = dataset_processors.load_Kaggle_df('../data/kaggle/kaggle.csv')
     trait_labels = ['E', 'N', 'F', 'J']
 
 _, _, _, other_features_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
 inputs, full_targets = merge_features(inputs, other_features_df, full_targets)
 
-n_splits = 10
+n_splits = 3
 fold_acc = {}
 expdata = {}
 expdata['acc'], expdata['trait'], expdata['fold'] = [], [], []

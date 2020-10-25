@@ -14,9 +14,10 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from PIL import Image
 
-inp_dir, dataset_type, network, lr, batch_size, epochs, seed, write_file, embed, layer, mode, embed_mode = utils.parse_args()
+inp_dir, dataset_type, network, lr, batch_size, epochs, write_file, embed, layer, mode, embed_mode = utils.parse_args()
 mairesse, nrc, nrc_vad, affectivespace, hourglass, readability = utils.parse_args_SHAP()
 n_classes = 2
+seed = 0
 np.random.seed(seed)
 tf.compat.v1.set_random_seed(seed)
 start = time.time()
@@ -40,7 +41,7 @@ def load_features(dir):
     mairesse = pd.read_csv(dir + 'essays_mairesse_labeled.csv')
     mairesse = mairesse.set_index(mairesse.columns[0])
     nrc = pd.read_csv(dir + 'essays_nrc.csv').set_index(['#AUTHID'])
-    nrc_vad = pd.read_csv(dir + 'essays_nrc-vad.csv').set_index(['#AUTHID'])
+    nrc_vad = pd.read_csv(dir + 'essays_nrc_vad.csv').set_index(['#AUTHID'])
     # affectivespace = pd.read_csv(dir + 'essays_affectivespace.csv').set_index(['#AUTHID'])
     hourglass = pd.read_csv(dir + 'essays_hourglass.csv').set_index(['#AUTHID'])
     readability = pd.read_csv(dir + 'essays_readability.csv').set_index(['#AUTHID'])
@@ -173,7 +174,8 @@ if __name__ == "__main__":
         plt.title(ocean_label_list[i])
         plt.subplots_adjust(wspace=0.1)
         plt.axis("off")
-    plt.show()
+    # plt.show()
+    plt.savefig("result_fig.png")
     print(MI_features)
 
-    print('tammat')
+    print('done')

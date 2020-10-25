@@ -41,10 +41,10 @@ start = time.time()
 
 if __name__ == "__main__":
     if dataset == 'essays':
-        dump_data = dataset_processors.load_essays_df('data/essays/essays.csv')
+        dump_data = dataset_processors.load_essays_df('../data/essays/essays.csv')
         trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
     elif dataset == 'kaggle':
-        dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
+        dump_data = dataset_processors.load_Kaggle_df('../data/kaggle/kaggle.csv')
         trait_labels = ['E', 'N', 'F', 'J']
     print('dataset loaded! Getting psycholinguistic features...')
     inputs, full_targets, feature_names, _ = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)

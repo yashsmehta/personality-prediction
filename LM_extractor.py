@@ -78,6 +78,7 @@ hidden_features = []
 all_targets = []
 all_author_ids = []
 
+# get bert embedding for each input
 for author_ids, input_ids, targets in data_loader:
     with torch.no_grad():
         all_targets.append(targets.cpu().numpy())
@@ -118,8 +119,7 @@ for author_ids, input_ids, targets in data_loader:
                     tmp.append((bert_output[2][ii + 1].cpu().numpy()).mean(axis=1))
                 
             hidden_features.append(np.array(tmp))
-        
-# storing the embeddings into a pickle file
+
 
 file = open(op_dir + dataset + '-' + embed + '-' +embed_mode + '-' + mode + '.pkl', 'wb')
 
@@ -129,5 +129,3 @@ file.close()
 print(timedelta(seconds=int(time.time() - start)), end=' ')
 print('extracting embeddings for {} dataset: DONE!'.format(dataset))
 
-# input_ids = input_ids.cpu().numpy()
-# subdoc_input_ids = torch.from_numpy(subdoc_input_ids).long().to(DEVICE)

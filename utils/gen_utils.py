@@ -35,7 +35,7 @@ def str_to_bool(value):
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-inp_dir", type=str, default='pkl_data/')
+    ap.add_argument("-inp_dir", type=str, default='../pkl_data/')
     ap.add_argument("-dataset", type=str, default='essays')
     ap.add_argument("-lr", type=float, default=5e-4)
     ap.add_argument("-batch_size", type=int, default=32)
@@ -44,8 +44,8 @@ def parse_args():
     ap.add_argument('-log_expdata', type=str_to_bool, nargs='?', const=True, default=True)
     ap.add_argument("-embed", type=str, default='bert-base')
     ap.add_argument("-layer", type=str, default='11')
-    ap.add_argument("-mode", type=str, default=None)
-    ap.add_argument("-embed_mode", type=str, default=None)
+    ap.add_argument("-mode", type=str, default='512_head')
+    ap.add_argument("-embed_mode", type=str, default='cls')
     ap.add_argument("-jobid", type=int, default=0)
     args = ap.parse_args()
     return args.inp_dir, args.dataset, args.lr, args.batch_size, args.epochs,\

@@ -34,13 +34,11 @@ start = time.time()
 
 def merge_features(embedding, other_features, full_targets):
     if dataset == 'essays':
-        orders = pd.read_csv('data/essays/author_id_order.csv').set_index(['order'])
+        orders = pd.read_csv('../data/essays/author_id_order.csv').set_index(['order'])
         df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(['user'])
     else:
         df = embedding
     df = pd.merge(df, other_features, left_index=True, right_index=True)
-    # df = pd.merge(df, full_targets, left_index=True, right_index=True)
-    # df = df.drop(['index'], axis=1)
     data_arr = df[df.columns[:-len(trait_labels)]].values
     targets_arr = df[df.columns[-len(trait_labels):]].values
     return data_arr, targets_arr
@@ -69,7 +67,6 @@ else:
     alphaW[int(layer) - 1] = 1
 
 # just changing the way data is stored (tuples of minibatches) and getting the output for the required layer of BERT using alphaW
-# data_x[ii].shape = (12, batch_size, 768)
 inputs = []
 targets = []
 author_ids = []
@@ -93,13 +90,11 @@ full_targets['order'] = author_ids
 full_targets = full_targets.set_index(['order'])
 
 if dataset == 'essays':
-    # dump_data = pd.read_csv('data/essays/essays.csv', index_col='#AUTHID')
-    dump_data = dataset_processors.load_essays_df('data/essays/essays.csv')
+    dump_data = dataset_processors.load_essays_df('../data/essays/essays.csv')
     trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
 
 elif dataset == 'kaggle':
-    # dump_data = pd.read_csv('data/kaggle/kaggle.csv', index_col='id')
-    dump_data = dataset_processors.load_Kaggle_df('data/kaggle/kaggle.csv')
+    dump_data = dataset_processors.load_Kaggle_df('../data/kaggle/kaggle.csv')
     trait_labels = ['E', 'N', 'F', 'J']
 
 _, _, _, other_features_df = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)

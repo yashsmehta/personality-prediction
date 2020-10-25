@@ -14,7 +14,7 @@ def preprocess_text(sentence):
     # Remove punctuations and numbers
     # sentence = re.sub('[^a-zA-Z]', ' ', sentence)
     # sentence = re.sub('[^a-zA-Z.?!,]', ' ', sentence)
-    # # Single character removal (except I)
+    # Single character removal (except I)
     # sentence = re.sub(r"\s+[a-zA-HJ-Z]\s+", ' ', sentence)
     # Removing multiple spaces
     sentence = re.sub(r'\s+', ' ', sentence)
@@ -34,7 +34,6 @@ def load_essays_df(datafile):
                 continue
 
             text = line[1]
-
             df = df.append({"user": line[0],
                             "text": text,
                             "token_len": 0,
@@ -54,14 +53,11 @@ def load_essays_df(datafile):
 
 
 def essays_embeddings(datafile, tokenizer, token_length, mode):
-    hidden_features = []
     targets = []
-    token_len = []
     input_ids = []
 
     df = load_essays_df(datafile)
     cnt = 0
-    num_subdocs = []
 
     # sorting all essays in ascending order of their length
     for ind in df.index:
@@ -119,7 +115,7 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
 
 
 def load_Kaggle_df(datafile):
-    with open(datafile, "rt") as csvf:
+    with open(datafile, "rt", encoding='utf-8') as csvf:
         csvreader = csv.reader(csvf, delimiter=',', quotechar='"')
         first_line = True
         df = pd.DataFrame(columns=["user", "text", "E", "N", "F", "J"])
@@ -173,58 +169,3 @@ def kaggle_embeddings(datafile, tokenizer, token_length):
 
     return author_ids, input_ids, targets
 
-
-def load_pandora_df(datafile):
-    # load posts_df in a proper [author,100 most recent posts] format
-    posts_df = get_100_recent_posts(datafile + "all_comments_since_2015.csv")
-    # load profiles
-    profiles_df = pd.read_csv(datafile + "author_profiles.csv").set_index('author')
-    merged_df = posts_df.join(profiles_df)
-    merged_df.extraversion /= 100
-    merged_df.neuroticism /= 100
-    merged_df.agreeableness /= 100
-    merged_df.conscientiousness /= 100
-    merged_df.openness /= 100
-
-    print('EXT : ', merged_df.extraversion.describe())
-    print('NEU : ', merged_df.neuroticism.describe())
-    print('AGR : ', merged_df.agreeableness.describe())
-    print('CON : ', merged_df.conscientiousness.describe())
-    print('OPN : ', merged_df.openness.describe())
-
-    print('Introverted : ', merged_df.introverted.value_counts())
-    print('intuitive : ', merged_df.intuitive.value_counts())
-    print('thinking : ', merged_df.thinking.value_counts())
-    print('perceiving : ', merged_df.perceiving.value_counts())
-
-    return merged_df
-
-
-def pandora_embeddings(datafile, tokenizer, token_length):
-    hidden_features = []
-    targets = []
-    token_len = []
-    input_ids = []
-
-    df = load_pandora_df(datafile)
-    cnt = 0
-    for ind in df.index:
-        text = preprocess_text(df['text'][ind])
-        tokens = tokenizer.tokenize(text)
-        token_len.append(len(tokens))
-        token_ids = tokenizer.encode(tokens, add_special_tokens=True, max_length=token_length, pad_to_max_length=True)
-        if (cnt < 10):
-            print(tokens)
-
-        input_ids.append(token_ids)
-        # We first add OCEAN traits, then MBTI traits
-        targets.append([df.extraversion[ind], df.neuroticism[ind], df.agreeableness[ind], df.conscientiousness[ind],
-                        df.openness[ind],
-                        df.introverted[ind], df.intuitive[ind], df.thinking[ind],
-                        df.perceiving[ind]])
-
-        cnt += 1
-    print('token lengths : ', token_len)
-    print('average length : ', int(np.mean(token_len)))
-    author_ids = np.array(df.index)
-    return author_ids, input_ids, targets

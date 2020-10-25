@@ -15,7 +15,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0,'/nfs/ghome/live/yashm/Desktop/research/personality/utils')
 
-import gen_utils as utils
+import utils.gen_utils as utils
 
 inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 # embed_mode {mean, cls}
@@ -71,7 +71,7 @@ inputs = np.array(inputs)
 full_targets = np.array(targets)
 
 trait_labels = ['EXT','NEU','AGR','CON','OPN']
-n_splits = 10
+n_splits = 3
 fold_acc = {}
 expdata = {}
 expdata['acc'], expdata['trait'], expdata['fold'] = [],[],[]
