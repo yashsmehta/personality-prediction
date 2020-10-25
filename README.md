@@ -24,13 +24,13 @@ pip -r requirements.txt
 First run the LM extractor code which passes the dataset through the language model and stores the embeddings (of all layers) in a pickle file. Creating this 'new dataset' saves us a lot of compute time and allows effective searching of the hyperparameters for the finetuning network. Before running the code, create a pkl_data folder in the repo folder. All the arguments are optional and passing no arguments runs the extractor with the default values.
 
 ```bash
-python LM_extractor.py -dataset_type 'essays' -token_length 512 -datafile 'data/essays.csv' -batch_size 32 -embed 'bert-base' -op_dir 'pkl_data'
+python LM_extractor.py -dataset_type 'essays' -token_length 512 -batch_size 32 -embed 'bert-base' -op_dir 'pkl_data'
 ```
 
 Next run the finetuning network which is currently a MLP.
 
 ```bash
-python finetuneNet.py 
+python finetuneNet.py
 ```
 
 ## Running Time
