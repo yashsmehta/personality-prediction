@@ -71,7 +71,7 @@ inputs = np.array(inputs)
 full_targets = np.array(targets)
 
 trait_labels = ['EXT','NEU','AGR','CON','OPN']
-n_splits = 3
+n_splits = 10
 fold_acc = {}
 expdata = {}
 expdata['acc'], expdata['trait'], expdata['fold'] = [],[],[]

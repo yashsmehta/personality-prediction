@@ -2,7 +2,6 @@ import pandas as pd
 import utils.gen_utils as utils
 
 dataset_type, datafile, op_dir = utils.parse_args_metafeatures()
-from collections import Counter
 import readability
 import re
 import numpy as np

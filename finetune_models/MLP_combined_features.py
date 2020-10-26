@@ -125,7 +125,6 @@ for trait_idx in range(full_targets.shape[1]):
 
         # define the neural network architecture
         model.add(tf.keras.layers.Dense(50, input_dim=features_dim, activation='relu'))
-        # model.add(tf.keras.layers.Dense(50, activation='relu'))
         model.add(tf.keras.layers.Dense(n_classes))
 
         k += 1
@@ -136,13 +135,6 @@ for trait_idx in range(full_targets.shape[1]):
         history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
                             validation_data=(x_test, y_test), verbose=0)
 
-        # if(k==0):
-        #     print(model.summary())
-
-        # print('\nacc: ', history.history['accuracy'])
-        # print('val acc: ', history.history['val_accuracy'])
-        # print('loss: ', history.history['loss'])
-        # print('val loss: ', history.history['val_loss'])
         expdata['acc'].append(100 * max(history.history['val_accuracy']))
 
 print(expdata)

@@ -3,9 +3,6 @@ import utils.gen_utils as utils
 
 dataset_type, datafile, op_dir = utils.parse_args_metafeatures()
 from collections import Counter
-import readability
-import re
-
 
 
 def extract_NRC_features(x, sentic_df):

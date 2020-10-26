@@ -55,7 +55,7 @@ if __name__ == "__main__":
     print(full_targets.shape)
     print(feature_names)
     print('starting k-fold cross validation...')
-    
+
     n_splits = 10
     fold_acc = {}
     expdata = {}
@@ -82,9 +82,7 @@ if __name__ == "__main__":
 
             # define the neural network architecture
             model.add(tf.keras.layers.Dense(50, input_dim=features_dim, activation='relu'))
-            # model.add(tf.keras.layers.Dense(50, activation='relu'))
             model.add(tf.keras.layers.Dense(n_classes))
-
 
             k += 1
             model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
@@ -94,17 +92,15 @@ if __name__ == "__main__":
             history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
                                 validation_data=(x_test, y_test), verbose=0)
 
-            # print('val acc: ', history.history['val_accuracy'])
-            # print('loss: ', history.history['loss'])
-            # print('val loss: ', history.history['val_loss'])
             expdata['acc'].append(100 * max(history.history['val_accuracy']))
 
-    print (expdata)
+    print(expdata)
 
     df = pd.DataFrame.from_dict(expdata)
 
-    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['model_input'], df['embed'], df['layer'], df['mode'], df['embed_mode'], df['jobid'] = network,  \
-                                                                    dataset, lr, batch_size, epochs, MODEL_INPUT, embed, layer, mode, embed_mode, jobid
+    df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['model_input'], df['embed'], df['layer'], \
+    df['mode'], df['embed_mode'], df['jobid'] = network, \
+                                                dataset, lr, batch_size, epochs, MODEL_INPUT, embed, layer, mode, embed_mode, jobid
 
     pd.set_option('display.max_columns', None)
     print(df.head(5))

@@ -43,9 +43,9 @@ tf.random.set_seed(jobid)
 start = time.time()
 
 def classification(X_train, X_test, y_train, y_test, file_name):
-    model_name = file_name + '.joblib'
     classifier = svm.SVC(gamma="scale")
     classifier.fit(X_train, y_train)
+    # model_name = file_name + '.joblib'
     # joblib.dump(classifier, model_name)
     acc = classifier.score(X_test, y_test)
     return acc
