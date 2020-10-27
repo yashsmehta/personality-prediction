@@ -46,3 +46,17 @@ On a CPU, 'bert-base' extractor takes about ~25m
 finetuneNet.py
 ```
 On a RTX2080 GPU, running for 15 epochs (with no cross-validation) takes from 5s-60s, depending on the MLP architecture.
+
+## Citation
+
+If you used our code for your research, then please cite our work as follows:
+
+```
+@inproceedings{mehtabottom,
+  title={Bottom-Up and Top-Down: Predicting Personality with Psycholinguistic and Language Model Features},
+  author={Mehta, Yash and Fatehi, Samin and Kazameini, Amirmohammad and Stachl, Clemens and Cambria, Erik and Eetemadi, Sauleh},
+  booktitle={Proceedings of the International Conference of Data Mining},
+  Organization = {IEEE},
+  year={2020}}
+}
+```
