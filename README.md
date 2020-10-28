@@ -49,7 +49,7 @@ On a RTX2080 GPU, running for 15 epochs (with no cross-validation) takes from 5s
 
 ## Citation
 
-If you used our code for your research, then please cite our work as follows:
+If you find this repo useful for your research, please cite it using the following BibTex entry:
 
 ```
 @inproceedings{mehtabottom,
