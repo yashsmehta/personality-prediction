@@ -2,44 +2,21 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import numpy as np
-import csv
-import pickle
 import time
 import pandas as pd
 import tensorflow as tf
-import re
-import preprocessor as p
 from pathlib import Path
 from sklearn.model_selection import StratifiedKFold
-from scipy.io import arff
-
-import sys
-
-sys.path.insert(0, '/nfs/ghome/live/yashm/Desktop/research/personality/utils')
-
 import utils.gen_utils as utils
 import utils.dataset_processors as dataset_processors
 import utils.linguistic_features_utils as feature_utils
 
-inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
 
-features_dim = 123
-MODEL_INPUT = 'psycholinguist_features'
-layer = ''
-path = 'explogs/'
-n_classes = 2
-network = 'MLP'
-print(network)
+def get_inputs(dataset):
+    """ Read data from metafeature files and prepare for training. """
 
-nrc, nrc_vad, readability, mairesse = [True, True, True, True]
-feature_flags = [nrc, nrc_vad, readability, mairesse]
-
-np.random.seed(jobid)
-tf.random.set_seed(jobid)
-
-start = time.time()
-
-if __name__ == "__main__":
+    nrc, nrc_vad, readability, mairesse = [True, True, True, True]
+    feature_flags = [nrc, nrc_vad, readability, mairesse]
     if dataset == 'essays':
         dump_data = dataset_processors.load_essays_df('../data/essays/essays.csv')
         trait_labels = ['EXT', 'NEU', 'AGR', 'CON', 'OPN']
@@ -47,28 +24,24 @@ if __name__ == "__main__":
         dump_data = dataset_processors.load_Kaggle_df('../data/kaggle/kaggle.csv')
         trait_labels = ['E', 'N', 'F', 'J']
     print('dataset loaded! Getting psycholinguistic features...')
-    inputs, full_targets, feature_names, _ = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
+    inputs, full_targets, _, _ = feature_utils.get_psycholinguist_data(dump_data, dataset, feature_flags)
     inputs = np.array(inputs)
     full_targets = np.array(full_targets)
 
-    print(inputs.shape)
-    print(full_targets.shape)
-    print(feature_names)
-    print('starting k-fold cross validation...')
+    return inputs, full_targets, trait_labels
 
+
+def training(inputs, full_targets, trait_labels):
+    """ Train MLP model for each trait on 10-fold corss-validtion. """
     n_splits = 10
-    fold_acc = {}
     expdata = {}
     expdata['acc'], expdata['trait'], expdata['fold'] = [], [], []
 
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
         targets = full_targets[:, trait_idx]
-        n_data = targets.shape[0]
-
         expdata['trait'].extend([trait_labels[trait_idx]] * n_splits)
         expdata['fold'].extend(np.arange(1, n_splits + 1))
-
         skf = StratifiedKFold(n_splits=n_splits, shuffle=False)
         k = -1
 
@@ -88,16 +61,17 @@ if __name__ == "__main__":
             model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
                           loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
                           metrics=['mse', 'accuracy'])
-
             history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size,
                                 validation_data=(x_test, y_test), verbose=0)
-
             expdata['acc'].append(100 * max(history.history['val_accuracy']))
-
     print(expdata)
-
     df = pd.DataFrame.from_dict(expdata)
 
+    return df
+
+
+def logging(df, log_expdata=True):
+    """ Save results and each models config and hyper parameters."""
     df['network'], df['dataset'], df['lr'], df['batch_size'], df['epochs'], df['model_input'], df['embed'], df['layer'], \
     df['mode'], df['embed_mode'], df['jobid'] = network, \
                                                 dataset, lr, batch_size, epochs, MODEL_INPUT, embed, layer, mode, embed_mode, jobid
@@ -112,3 +86,24 @@ if __name__ == "__main__":
             df.to_csv(path + 'expdata.csv', mode='a', header=True)
         else:
             df.to_csv(path + 'expdata.csv', mode='a', header=False)
+
+
+if __name__ == "__main__":
+    inp_dir, dataset, lr, batch_size, epochs, log_expdata, embed, layer, mode, embed_mode, jobid = utils.parse_args()
+
+    features_dim = 123
+    MODEL_INPUT = 'psycholinguist_features'
+    layer = ''
+    path = 'explogs/'
+    n_classes = 2
+    network = 'MLP'
+    print(network)
+
+    np.random.seed(jobid)
+    tf.random.set_seed(jobid)
+
+    start = time.time()
+    inputs, full_targets, trait_labels = get_inputs(dataset)
+    print('starting k-fold cross validation...')
+    df = training(inputs, full_targets, trait_labels)
+    logging(df, log_expdata)

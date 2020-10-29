@@ -40,7 +40,7 @@ def classification(X_train, X_test, y_train, y_test, file_name):
     return acc
 
 
-def training(dataset, inputs, full_targets):
+def training(dataset, inputs, full_targets, trait_labels):
     """ Train model for each trait on 10-fold corss-validtion. """
     n_splits = 10
     expdata = {}
@@ -106,5 +106,5 @@ if __name__ == "__main__":
     inputs, full_targets, trait_labels = get_inputs(dataset)
     print('starting k-fold cross validation...')
 
-    df = training(dataset, inputs, full_targets)
+    df = training(dataset, inputs, full_targets, trait_labels)
     logging(df, log_expdata)
