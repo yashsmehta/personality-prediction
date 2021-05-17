@@ -33,6 +33,12 @@ Next run the finetuning network which is currently a MLP.
 python finetuneNet.py
 ```
 
+
+Results Table             |  Language Models vs Psycholinguistic Traits
+:-------------------------:|:-------------------------:
+<img src="https://github.com/yashsmehta/personality-prediction/blob/master/imgs/results-table.png" width="800"/>  |  <img src="https://github.com/yashsmehta/personality-prediction/blob/master/imgs/lm-vs-psycholinguitic-results.png" width="200" />
+
+
 #### Predicting personality on unseen text
 Follow the steps below for predicting personality (e.g. the Big-Five: OCEAN traits) on a new text/essay:
 
@@ -60,13 +66,13 @@ On a RTX2080 GPU, running for 15 epochs (with no cross-validation) takes from 5s
 
 ## Literature
 
-#### Deep Learning based Personality Prediction (AI Review Journal - 2020)
+#### [Deep Learning based Personality Prediction [Literature REVIEW]](https://link.springer.com/article/10.1007/s10462-019-09770-z) (Springer AIR Journal - 2020)
 
 ```
 Mehta, Y., Majumder, N., Gelbukh, A. et al. Recent trends in deep learning based personality detection. Artif Intell Rev 53, 2313–2339 (2020). https://doi.org/10.1007/s10462-019-09770-z
 ```
 
-#### Language Model Based Personality Prediction (ICDM - 2020)
+#### [Language Model Based Personality Prediction](https://ieeexplore.ieee.org/document/9338428) (ICDM - 2020)
 If you find this repo useful for your research, please cite it using the following:
 
 ```
