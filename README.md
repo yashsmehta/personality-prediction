@@ -78,3 +78,6 @@ If you find this repo useful for your research, please cite it using the followi
 ```
 Mehta, Yash, et al. "Bottom-up and top-down: Predicting personality with psycholinguistic and language model features." 2020 IEEE International Conference on Data Mining (ICDM). IEEE, 2020.
 ```
+
+## License
+The source code for this project is licensed under the [MIT license](LICENSE.md).
