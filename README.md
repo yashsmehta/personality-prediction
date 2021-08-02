@@ -1,17 +1,37 @@
-# Language Models and Automated Personality Prediction
+# Automated Personality Prediction using Pre-Trained Language Models
 
+ <a href="https://github.com/automl/NASLib">
+    <img src="https://img.shields.io/badge/Python-3.7%20%7C%203.8-blue?style=for-the-badge&logo=python" />
+  </a>&nbsp;
+  <a href="https://pytorch.org/">
+    <img src="https://img.shields.io/badge/pytorch-1.9-orange?style=for-the-badge&logo=pytorch" alt="PyTorch Version" />
+  </a>&nbsp;
+  <a href="https://github.com/automl/NASLib">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge&logo=open-source-initiative" alt="Open Source" />
+  </a>
+  <a href="https://github.com/automl/NASLib">
+    <img src="https://img.shields.io/github/stars/yashsmehta/personality-prediction?style=for-the-badge&logo=github" alt="GitHub Repo Stars" />
+  </a>
+  
 This repository contains code for the paper [Bottom-Up and Top-Down: 
 Predicting Personality with Psycholinguistic and Language Model Features](https://www.semanticscholar.org/paper/Bottom-Up-and-Top-Down%3A-Predicting-Personality-with-Mehta-Fatehi/a872c10eaba767f82ca0a2f474c5c8bcd05f0d44), published in **IEEE International Conference of Data Mining 2020**.
 
 Here are a set of experiments written in tensorflow + pytorch to explore automated personality detection using Language Models on the Essays dataset (Big-Five personality labelled traits) and the Kaggle MBTI dataset.
 
 
-## Installation
+## Setup
 
 Pull this repository from GitLab via:
 
 ```bash
 git clone git@gitlab.com:ml-automated-personality-detection/personality.git
+```
+
+Creating a new conda environment is recomended. Install PyTorch GPU/CPU for your setup.
+
+```bash
+conda create -n mvenv python=3.8
+conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c nvidia
 ```
 
 See the requirements.txt for the list of dependent packages which can be installed via:
@@ -27,10 +47,10 @@ First run the LM extractor code which passes the dataset through the language mo
 python LM_extractor.py -dataset_type 'essays' -token_length 512 -batch_size 32 -embed 'bert-base' -op_dir 'pkl_data'
 ```
 
-Next run the finetuning network which is currently a MLP.
+Next run a finetuning model to take the extracted features as input from the pickle file and train a finetuning model. We find a shallow MLP to be the best performing one
 
 ```bash
-python finetuneNet.py
+python finetune_models/MLP_LM.py
 ```
 
 
@@ -60,7 +80,7 @@ On a RTX2080 GPU, the -embed 'bert-base' extractor takes about ~2m 30s and 'bert
 On a CPU, 'bert-base' extractor takes about ~25m
 
 ```bash
-finetuneNet.py
+python finetune_models/MLP_LM.py
 ```
 On a RTX2080 GPU, running for 15 epochs (with no cross-validation) takes from 5s-60s, depending on the MLP architecture.
 
@@ -68,15 +88,31 @@ On a RTX2080 GPU, running for 15 epochs (with no cross-validation) takes from 5s
 
 #### [Deep Learning based Personality Prediction [Literature REVIEW]](https://link.springer.com/article/10.1007/s10462-019-09770-z) (Springer AIR Journal - 2020)
 
-```
-Mehta, Y., Majumder, N., Gelbukh, A. et al. Recent trends in deep learning based personality detection. Artif Intell Rev 53, 2313–2339 (2020). https://doi.org/10.1007/s10462-019-09770-z
+```bibtex
+@article{mehta2020recent,
+  title={Recent Trends in Deep Learning Based Personality Detection},
+  author={Mehta, Yash and Majumder, Navonil and Gelbukh, Alexander and Cambria, Erik},
+  journal={Artificial Intelligence Review},
+  pages={2313–2339},
+  year={2020},
+  doi = {https://doi.org/10.1007/s10462-019-09770-z},
+  url = {https://link.springer.com/article/10.1007/s10462-019-09770-z}
+  publisher={Springer}
+}
 ```
 
 #### [Language Model Based Personality Prediction](https://ieeexplore.ieee.org/document/9338428) (ICDM - 2020)
 If you find this repo useful for your research, please cite it using the following:
 
-```
-Mehta, Yash, et al. "Bottom-up and top-down: Predicting personality with psycholinguistic and language model features." 2020 IEEE International Conference on Data Mining (ICDM). IEEE, 2020.
+```bibtex
+@inproceedings{mehta2020bottom,
+  title={Bottom-up and top-down: Predicting personality with psycholinguistic and language model features},
+  author={Mehta, Yash and Fatehi, Samin and Kazameini, Amirmohammad and Stachl, Clemens and Cambria, Erik and Eetemadi, Sauleh},
+  booktitle={2020 IEEE International Conference on Data Mining (ICDM)},
+  pages={1184--1189},
+  year={2020},
+  organization={IEEE}
+}
 ```
 
 ## License
