@@ -14,7 +14,10 @@ from pathlib import Path
 
 import sys
 
-sys.path.insert(0, "/nfs/ghome/live/yashm/Desktop/research/personality/utils")
+# add parent directory to the path as well, if running from the finetune folder
+parent_dir = os.path.dirname(os.getcwd())
+sys.path.insert(0, parent_dir)
+sys.path.insert(0, os.getcwd())
 
 import utils.gen_utils as utils
 
