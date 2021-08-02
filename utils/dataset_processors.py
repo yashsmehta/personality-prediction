@@ -103,9 +103,6 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
 
             input_ids.append(token_ids)
 
-        if (cnt < 3):
-            print(input_ids[-1])
-
         targets.append([df['EXT'][ii], df['NEU'][ii], df['AGR'][ii], df['CON'][ii], df['OPN'][ii]])
         cnt += 1
 

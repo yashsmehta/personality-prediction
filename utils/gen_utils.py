@@ -35,7 +35,7 @@ def str_to_bool(value):
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-inp_dir", type=str, default='../pkl_data/')
+    ap.add_argument("-inp_dir", type=str, default='pkl_data/')
     ap.add_argument("-dataset", type=str, default='essays')
     ap.add_argument("-lr", type=float, default=5e-4)
     ap.add_argument("-batch_size", type=int, default=32)
