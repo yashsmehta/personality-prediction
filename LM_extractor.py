@@ -13,7 +13,9 @@ from transformers import *
 import utils.gen_utils as utils
 from utils.data_utils import MyMapDataset
 import os
+from pathlib import Path
 
+sys.path.insert(0, os.getcwd())
 
 start = time.time()
 
@@ -92,7 +94,7 @@ def get_model(embed):
 
     model_class, tokenizer_class, pretrained_weights = MODEL
 
-    # load the LM model and tokenizer from the HuggingFace Transformeres library
+    # load the LM model and tokenizer from the HuggingFace Transformers library
     model = model_class.from_pretrained(pretrained_weights, output_hidden_states=True)  # output_attentions=False
     tokenizer = tokenizer_class.from_pretrained(pretrained_weights, do_lower_case=True)
 
@@ -102,7 +104,7 @@ def get_model(embed):
 if __name__ == "__main__":
     # argument extractor
     dataset, token_length, batch_size, embed, op_dir, mode, embed_mode = utils.parse_args_extractor()
-    print('{} : {} : {} : {} : {}'.format(dataset, embed, token_length, mode, embed_mode))
+    print('{} | {} | {} | {} | {}'.format(dataset, embed, token_length, mode, embed_mode))
     batch_size = int(32)
     model, tokenizer, n_hl, hidden_dim = get_model(embed)
 
@@ -135,9 +137,10 @@ if __name__ == "__main__":
             all_author_ids.append(author_ids.cpu().numpy())
             extract_bert_features(input_ids, mode, n_hl)
 
-    if not os.path.exists(op_dir):
-        os.makedirs(op_dir)
-    file = open(op_dir + dataset + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl', 'wb')
+    Path(op_dir).mkdir(parents=True, exist_ok=True) 
+    pkl_file_name = dataset + '-' + embed + '-' + embed_mode + '-' + mode + '.pkl'
+    
+    file = open(os.path.join(op_dir, pkl_file_name), 'wb')
     pickle.dump(zip(all_author_ids, hidden_features, all_targets), file)
     file.close()
 

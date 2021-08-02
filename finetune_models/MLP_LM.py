@@ -1,4 +1,5 @@
 import os
+import sys
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
@@ -10,9 +11,13 @@ import time
 import pandas as pd
 from pathlib import Path
 
-import utils.gen_utils as utils
+# add parent directory to the path as well, if running from the finetune folder
+parent_dir = os.path.dirname(os.getcwd())
+sys.path.insert(0, parent_dir)
 
+sys.path.insert(0, os.getcwd())
 
+import utils.gen_utils as utils 
 
 def get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer):
     """ Read data from pkl file and prepare for training. """
