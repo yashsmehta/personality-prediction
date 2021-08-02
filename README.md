@@ -1,5 +1,11 @@
+
 # Automated Personality Prediction using Pre-Trained Language Models
 
+<p align="center">
+  <img width="700" src="https://github.com/yashsmehta/personality-prediction/blob/master/imgs/personality.jpeg">
+</p>
+
+<p align="center">
  <a href="https://github.com/automl/NASLib">
     <img src="https://img.shields.io/badge/Python-3.7%20%7C%203.8-blue?style=for-the-badge&logo=python" />
   </a>&nbsp;
@@ -12,7 +18,8 @@
   <a href="https://github.com/automl/NASLib">
     <img src="https://img.shields.io/github/stars/yashsmehta/personality-prediction?style=for-the-badge&logo=github" alt="GitHub Repo Stars" />
   </a>
-  
+</p>
+
 This repository contains code for the paper [Bottom-Up and Top-Down: 
 Predicting Personality with Psycholinguistic and Language Model Features](https://www.semanticscholar.org/paper/Bottom-Up-and-Top-Down%3A-Predicting-Personality-with-Mehta-Fatehi/a872c10eaba767f82ca0a2f474c5c8bcd05f0d44), published in **IEEE International Conference of Data Mining 2020**.
 
