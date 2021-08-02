@@ -2,7 +2,7 @@
 # Automated Personality Prediction using Pre-Trained Language Models
 
 <p align="center">
-  <img width="700" src="https://github.com/yashsmehta/personality-prediction/blob/master/imgs/personality.jpeg">
+  <img width="600" src="https://github.com/yashsmehta/personality-prediction/blob/master/imgs/personality.jpeg">
 </p>
 
 <p align="center">
