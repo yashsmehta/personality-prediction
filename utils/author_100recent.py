@@ -12,8 +12,11 @@ class MapReducer:
 
     def mapper(self, group):
         gp_name, lst = group
-        gp_df = pd.DataFrame([self.df.loc[x] for x in lst], columns=self.df.columns).sort_values('created_utc').iloc[
-                -100:]
+        gp_df = (
+            pd.DataFrame([self.df.loc[x] for x in lst], columns=self.df.columns)
+            .sort_values("created_utc")
+            .iloc[-100:]
+        )
         res = " ||| ".join(gp_df.body.to_list())
         self.counter += 1
         print("author {} done".format(self.counter))
@@ -38,7 +41,7 @@ def get_100_recent_posts(data_file):
         else:
             for group in groups:
                 results.append(map_reducer.mapper(group))
-        x = pd.DataFrame(results, columns=['author', 'text']).set_index('author')
+        x = pd.DataFrame(results, columns=["author", "text"]).set_index("author")
         print("#done#")
         pd.to_pickle(x, recent_df_path)
         return x

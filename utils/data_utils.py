@@ -11,22 +11,29 @@ import math
 from utils.author_100recent import get_100_recent_posts
 import utils.dataset_processors as dataset_processors
 
+
 class MyMapDataset(Dataset):
     def __init__(self, dataset, tokenizer, token_length, DEVICE, mode):
-        if dataset == 'essays':
-            datafile = 'data/essays/essays.csv'
-            author_ids, input_ids, targets = dataset_processors.essays_embeddings(datafile, tokenizer, token_length, mode)
-        elif dataset == 'kaggle':
-            datafile = 'data/kaggle/kaggle.csv'
-            author_ids, input_ids, targets = dataset_processors.kaggle_embeddings(datafile, tokenizer, token_length)
-        elif dataset == 'pandora':
-            author_ids, input_ids, targets = dataset_processors.pandora_embeddings(datafile, tokenizer, token_length)
+        if dataset == "essays":
+            datafile = "data/essays/essays.csv"
+            author_ids, input_ids, targets = dataset_processors.essays_embeddings(
+                datafile, tokenizer, token_length, mode
+            )
+        elif dataset == "kaggle":
+            datafile = "data/kaggle/kaggle.csv"
+            author_ids, input_ids, targets = dataset_processors.kaggle_embeddings(
+                datafile, tokenizer, token_length
+            )
+        elif dataset == "pandora":
+            author_ids, input_ids, targets = dataset_processors.pandora_embeddings(
+                datafile, tokenizer, token_length
+            )
 
         author_ids = torch.from_numpy(np.array(author_ids)).long().to(DEVICE)
         input_ids = torch.from_numpy(np.array(input_ids)).long().to(DEVICE)
         targets = torch.from_numpy(np.array(targets))
 
-        if dataset == 'pandora':
+        if dataset == "pandora":
             targets = targets.float().to(DEVICE)
         else:
             targets = targets.long().to(DEVICE)

@@ -22,8 +22,10 @@ if __name__ == "__main__":
     sentic_df = pd.read_csv(sentic_path, header=None)
     sentic_df = sentic_df.set_index(sentic_df.columns[0])
 
-    tmp = count_df["concept_count"].apply(lambda x: extract_sentic_features(x, sentic_df))
+    tmp = count_df["concept_count"].apply(
+        lambda x: extract_sentic_features(x, sentic_df)
+    )
 
-    result = pd.concat([count_df['#AUTHID'], tmp], axis=1)
-    output_file = op_dir + dataset_type + '_affectivespace.csv'
+    result = pd.concat([count_df["#AUTHID"], tmp], axis=1)
+    output_file = op_dir + dataset_type + "_affectivespace.csv"
     result.to_csv(output_file, index=False)
