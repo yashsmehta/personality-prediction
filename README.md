@@ -21,7 +21,7 @@
 </p>
 
 This repository contains code for the paper [Bottom-Up and Top-Down: 
-Predicting Personality with Psycholinguistic and Language Model Features](https://www.semanticscholar.org/paper/Bottom-Up-and-Top-Down%3A-Predicting-Personality-with-Mehta-Fatehi/a872c10eaba767f82ca0a2f474c5c8bcd05f0d44), published in **IEEE International Conference of Data Mining 2020**.
+Predicting Personality with Psycholinguistic and Language Model Features](https://ieeexplore.ieee.org/document/9338428), published in **IEEE International Conference of Data Mining 2020**.
 
 Here are a set of experiments written in tensorflow + pytorch to explore automated personality detection using Language Models on the Essays dataset (Big-Five personality labelled traits) and the Kaggle MBTI dataset.
 
