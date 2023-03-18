@@ -34,11 +34,11 @@ Pull this repository from GitLab via:
 git clone https://github.com/yashsmehta/personality-prediction.git
 ```
 
-Creating a new conda environment is recomended. Install PyTorch GPU/CPU for your setup.
+Creating a new conda environment is recomended. Install PyTorch for your setup. Below code installs CPU version, but GPU is recommended to run BERT-based models.
 
 ```bash
 conda create -n mvenv python=3.8
-conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c nvidia
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
 See the requirements.txt for the list of dependent packages which can be installed via:
