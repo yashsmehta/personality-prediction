@@ -31,7 +31,7 @@ Here are a set of experiments written in tensorflow + pytorch to explore automat
 Pull this repository from GitLab via:
 
 ```bash
-git clone git@gitlab.com:ml-automated-personality-detection/personality.git
+git clone https://github.com/yashsmehta/personality-prediction.git
 ```
 
 Creating a new conda environment is recomended. Install PyTorch GPU/CPU for your setup.
