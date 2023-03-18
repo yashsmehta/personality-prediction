@@ -7,5 +7,5 @@ numpy==1.22.0
 scikit-learn==0.24.2
 readability==0.3.1
 pandas==1.3.1
-'transformers[torch]'
-'protobuf<=3.20.*'
+transformers[torch]
+protobuf<=3.20.*
