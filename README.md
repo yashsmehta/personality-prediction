@@ -44,7 +44,7 @@ conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c nvid
 See the requirements.txt for the list of dependent packages which can be installed via:
 
 ```bash
-pip -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Usage
