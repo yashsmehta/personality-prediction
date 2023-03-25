@@ -1,6 +1,6 @@
 torch   #for the LM_extractor
 torchvision
-tensorflow==2.7.2 # for finetuning models written in Keras
+tensorflow==2.11.1 # for finetuning models written in Keras
 tweet-preprocessor==0.6.0
 sentencepiece==0.1.96
 numpy==1.22.0
