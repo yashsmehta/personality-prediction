@@ -1,16 +1,16 @@
-import os
-import numpy as np
+from pathlib import Path
 from transformers import BertTokenizer, BertModel
-import torch
 
+import torch
+import numpy as np
+
+import os
 import re
 import sys
 import joblib 
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
-
-from pathlib import Path
 
 parent_dir = os.path.dirname(os.getcwd())
 sys.path.insert(0, parent_dir)
@@ -135,9 +135,8 @@ def predict(new_text, embed, op_dir, token_length, finetune_model):
     }
 
     print(f"\nPersonality predictions using {str(finetune_model).upper()}:")
-    for trait, predicted_class_index in predictions.items():
-        predicted_label = labels[predicted_class_index]
-        print(f"{trait}: {predicted_label}")
+    for trait, prediction in predictions.items():
+        print(f"{trait}: {labels[prediction]}")
 
 if __name__ == "__main__":
     (
