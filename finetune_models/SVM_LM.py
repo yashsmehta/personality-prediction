@@ -99,10 +99,12 @@ def training(dataset, inputs, full_targets, inp_dir, save_model):
             )
             expdata["acc"].append(100 * acc)
 
+            # check if the current model is the best so far
             if acc > best_accuracy:
                 best_accuracy = acc
                 best_model = model
 
+            # store the best model for this trait
             best_models[trait_labels[trait_idx]] = best_model
 
     # save the best models to separate files

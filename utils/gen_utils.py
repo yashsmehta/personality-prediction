@@ -132,3 +132,26 @@ def parse_args_SHAP():
         args.hourglass,
         args.readability,
     )
+
+
+def parse_args_predictor():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-dataset_type", type=str, default="essays")
+    ap.add_argument("-token_length", type=int, default=512)
+    ap.add_argument("-batch_size", type=str, default=32)
+    ap.add_argument("-embed", type=str, default="bert-base")
+    ap.add_argument("-op_dir", type=str, default="pkl_data/")
+    ap.add_argument("-mode", type=str, default="512_head")
+    ap.add_argument("-embed_mode", type=str, default="cls")
+    ap.add_argument("-finetune_model", type=str, default="mlp_lm")
+    args = ap.parse_args()
+    return (
+        args.dataset_type,
+        args.token_length,
+        args.batch_size,
+        args.embed,
+        args.op_dir,
+        args.mode,
+        args.embed_mode,
+        args.finetune_model,
+    )
