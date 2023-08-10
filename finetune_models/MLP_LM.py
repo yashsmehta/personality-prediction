@@ -64,9 +64,8 @@ def training(dataset, inputs, full_targets, inp_dir, save_model):
     expdata = {}
     expdata["acc"], expdata["trait"], expdata["fold"] = [], [], []
     
-    best_models, best_model = {}, None
-    best_accuracies, best_accuracy = {}, 0.0
-
+    best_models, best_model, best_accuracy = {}, None, 0.0
+    
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
         targets = full_targets[:, trait_idx]
@@ -117,7 +116,6 @@ def training(dataset, inputs, full_targets, inp_dir, save_model):
 
         # store the best model for this trait
         best_models[trait_labels[trait_idx]] = best_model
-        best_accuracies[trait_labels[trait_idx]] = best_accuracy
 
     # save the best models to separate files
     if str(save_model).lower() == "yes":
