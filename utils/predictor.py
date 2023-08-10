@@ -5,6 +5,7 @@ import torch
 
 import re
 import sys
+import joblib 
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
@@ -45,19 +46,32 @@ def load_finetune_model(op_dir, finetune_model):
         print(f"The directory with the selected model was not found: {path_model}")
         sys.exit(0)
 
-    models = {}
-    for dimension in ["EXT", "NEU", "AGR", "CON", "OPN"]:
-        if "MLP_LM" in str(finetune_model).upper():
-            model_name = f"{path_model}/MLP_LM_{dimension}.h5"
-            if not Path(model_name).is_file():
-                print(f"Model not found: {model_name}")
-                sys.exit(0)
-            model = tf.keras.models.load_model(model_name)
-        else:
-            print("Unforeseen model type! Aborting...")
+    def abort_if_model_not_exist(model_name):
+        if not Path(model_name).is_file():
+            print(f"Model not found: {model_name}")
             sys.exit(0)
 
-        models[dimension] = model
+    trait_labels = ["EXT", "NEU", "AGR", "CON", "OPN"]
+    models = {}
+
+    for trait in trait_labels:
+        if re.search(r"MLP_LM", str(finetune_model).upper()):
+            model_name = f"{path_model}/MLP_LM_{trait}.h5"
+            print(f"Load model: {model_name}")
+            abort_if_model_not_exist(model_name)
+            model = tf.keras.models.load_model(model_name)
+
+        elif re.search(r"SVM_LM", str(finetune_model).upper()):
+            model_name = f"{path_model}/SVM_LM_{trait}.pkl"
+            print(f"Load model: {model_name}")
+            abort_if_model_not_exist(model_name)
+            model = joblib.load(model_name)
+
+        else:
+            print(f"Unknown finetune model: {model_name}! Aborting...")
+            sys.exit(0)
+
+        models[trait] = model
 
     return models
 
@@ -101,17 +115,26 @@ def predict(new_text, embed, op_dir, token_length, finetune_model):
 
     predictions = {}
     for trait, model in models.items():
-        prediction = model.predict(new_embeddings)
-        # find the index of the highest probability (predicted class)
-        predicted_class_index = np.argmax(prediction, axis=1)[0]
-        predictions[trait] = predicted_class_index
+        try:
+            prediction = model.predict(new_embeddings)
+
+            if re.search(r"MLP_LM", str(finetune_model).upper()):
+                # find the index of the highest probability (predicted class)
+                predicted_class_index = np.argmax(prediction, axis=1)[0]
+                predictions[trait] = predicted_class_index
+
+            if re.search(r"SVM_LM", str(finetune_model).upper()):
+                predictions[trait] = prediction[0]
+
+        except BaseException as e:
+            print(f"Failed to make prediction: {e}")
 
     labels = {
         0: "No",
         1: "Yes"
     }
 
-    print("\nPersonality predictions:")
+    print(f"\nPersonality predictions using {str(finetune_model).upper()}:")
     for trait, predicted_class_index in predictions.items():
         predicted_label = labels[predicted_class_index]
         print(f"{trait}: {predicted_label}")
@@ -136,4 +159,3 @@ if __name__ == "__main__":
         print("\nPredictor was aborted by the user!")
     else:
         predict(new_text, embed, op_dir, token_length, finetune_model)
-
