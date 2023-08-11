@@ -19,6 +19,18 @@ sys.path.insert(0, os.getcwd())
 import utils.gen_utils as utils
 import utils.dataset_processors as dataset_processors
 
+
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+    print("GPU found (", torch.cuda.get_device_name(
+        torch.cuda.current_device()), ")")
+    torch.cuda.set_device(torch.cuda.current_device())
+    print("num device avail: ", torch.cuda.device_count())
+else:
+    DEVICE = torch.device("cpu")
+    print("Running on cpu")
+
+
 def get_bert_model(embed):
     if embed == "bert-base":
         tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -36,14 +48,26 @@ def get_bert_model(embed):
         tokenizer = BertTokenizer.from_pretrained("albert-large-v2")
         model = BertModel.from_pretrained("albert-large-v2")
 
+    else:
+        print(f"Unknown pre-trained model: {embed}! Aborting...")
+        sys.exit(0)
+
     return tokenizer, model
 
 
-def load_finetune_model(op_dir, finetune_model):
+def load_finetune_model(op_dir, finetune_model, dataset):
+    trait_labels = []
+
+    if dataset == "kaggle":
+        trait_labels = ["E", "N", "F", "J"]
+    else:
+        trait_labels = ["EXT", "NEU", "AGR", "CON", "OPN"]
+
     path_model = op_dir + "finetune_" + str(finetune_model).lower()
 
     if not Path(path_model).is_dir():
-        print(f"The directory with the selected model was not found: {path_model}")
+        print(
+            f"The directory with the selected model was not found: {path_model}")
         sys.exit(0)
 
     def abort_if_model_not_exist(model_name):
@@ -51,9 +75,7 @@ def load_finetune_model(op_dir, finetune_model):
             print(f"Model not found: {model_name}")
             sys.exit(0)
 
-    trait_labels = ["EXT", "NEU", "AGR", "CON", "OPN"]
     models = {}
-
     for trait in trait_labels:
         if re.search(r"MLP_LM", str(finetune_model).upper()):
             model_name = f"{path_model}/MLP_LM_{trait}.h5"
@@ -92,9 +114,10 @@ def extract_bert_features(text, tokenizer, model, token_length, overlap=256):
     embeddings_list = []
     with torch.no_grad():
         for segment in segments:
-            inputs = tokenizer(" ".join(segment), return_tensors="pt", padding=True, truncation=True)
+            inputs = tokenizer(
+                " ".join(segment), return_tensors="pt", padding=True, truncation=True)
             outputs = model(**inputs)
-            embeddings = outputs.last_hidden_state[:, 0, :].numpy() # extract the CLS token embedding
+            embeddings = outputs.last_hidden_state[:, 0, :].numpy()
             embeddings_list.append(embeddings)
 
     if len(embeddings_list) > 1:
@@ -105,15 +128,21 @@ def extract_bert_features(text, tokenizer, model, token_length, overlap=256):
 
     return embeddings
 
-def predict(new_text, embed, op_dir, token_length, finetune_model):
+
+def predict(new_text, embed, op_dir, token_length, finetune_model, dataset):
     new_text_pre = dataset_processors.preprocess_text(new_text)
-    
+
     tokenizer, model = get_bert_model(embed)
-    new_embeddings = extract_bert_features(new_text_pre, tokenizer, model, token_length, finetune_model)
 
-    models = load_finetune_model(op_dir, finetune_model)
+    if DEVICE == torch.device("cuda"):
+        model = model.cuda()
 
-    predictions = {}
+    new_embeddings = extract_bert_features(
+        new_text_pre, tokenizer, model, token_length, finetune_model)
+
+    models, predictions = load_finetune_model(
+        op_dir, finetune_model, dataset), {}
+
     for trait, model in models.items():
         try:
             prediction = model.predict(new_embeddings)
@@ -138,6 +167,7 @@ def predict(new_text, embed, op_dir, token_length, finetune_model):
     for trait, prediction in predictions.items():
         print(f"{trait}: {labels[prediction]}")
 
+
 if __name__ == "__main__":
     (
         dataset,
@@ -150,11 +180,12 @@ if __name__ == "__main__":
         finetune_model,
     ) = utils.parse_args_predictor()
     print(
-        "{} | {} | {} | {} | {} | {}".format(dataset, embed, token_length, mode, embed_mode, finetune_model)
+        "{} | {} | {} | {} | {} | {}".format(
+            dataset, embed, token_length, mode, embed_mode, finetune_model)
     )
     try:
         new_text = input("\nEnter a new text:")
     except KeyboardInterrupt:
         print("\nPredictor was aborted by the user!")
     else:
-        predict(new_text, embed, op_dir, token_length, finetune_model)
+        predict(new_text, embed, op_dir, token_length, finetune_model, dataset)
