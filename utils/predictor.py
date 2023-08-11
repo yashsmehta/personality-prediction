@@ -1,15 +1,16 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 from pathlib import Path
 from transformers import BertTokenizer, BertModel
 
 import torch
 import numpy as np
 
-import os
 import re
 import sys
 import joblib 
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
 
 parent_dir = os.path.dirname(os.getcwd())
