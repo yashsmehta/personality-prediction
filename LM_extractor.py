@@ -116,7 +116,7 @@ if __name__ == "__main__":
         embed_mode,
     ) = utils.parse_args_extractor()
     print(
-        "{} | {} | {} | {} | {}".format(dataset, embed, token_length, mode, embed_mode)
+        "\n{} | {} | {} | {} | {}\n".format(dataset, embed, token_length, mode, embed_mode)
     )
     batch_size = int(32)
     model, tokenizer, n_hl, hidden_dim = get_model(embed)

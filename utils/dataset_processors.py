@@ -22,7 +22,6 @@ def preprocess_text(sentence):
 
     return sentence
 
-
 def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
         csvreader = csv.reader(csvf, delimiter=",", quotechar='"')
@@ -36,19 +35,19 @@ def load_essays_df(datafile):
                 continue
 
             text = line[1]
-            df = df.append(
+            new_row = pd.DataFrame(
                 {
-                    "user": line[0],
-                    "text": text,
-                    "token_len": 0,
-                    "EXT": 1 if line[2].lower() == "y" else 0,
-                    "NEU": 1 if line[3].lower() == "y" else 0,
-                    "AGR": 1 if line[4].lower() == "y" else 0,
-                    "CON": 1 if line[5].lower() == "y" else 0,
-                    "OPN": 1 if line[6].lower() == "y" else 0,
-                },
-                ignore_index=True,
+                    "user": [line[0]],
+                    "text": [text],
+                    "token_len": [0],
+                    "EXT": [1 if line[2].lower() == "y" else 0],
+                    "NEU": [1 if line[3].lower() == "y" else 0],
+                    "AGR": [1 if line[4].lower() == "y" else 0],
+                    "CON": [1 if line[5].lower() == "y" else 0],
+                    "OPN": [1 if line[6].lower() == "y" else 0],
+                }
             )
+            df = pd.concat([df, new_row], ignore_index=True)
 
     print("EXT : ", df["EXT"].value_counts())
     print("NEU : ", df["NEU"].value_counts())
@@ -74,7 +73,7 @@ def essays_embeddings(datafile, tokenizer, token_length, mode):
     df.sort_values(by=["token_len", "user"], inplace=True, ascending=True)
     tmp_df = df["user"]
     tmp_df.to_csv("data/essays/author_id_order.csv", index_label="order")
-    print(df["token_len"].mean())
+    print("Mean length of essay: ", df["token_len"].mean())
 
     for ii in range(len(df)):
         text = preprocess_text(df["text"][ii])
