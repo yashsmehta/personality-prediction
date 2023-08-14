@@ -22,6 +22,7 @@ def preprocess_text(sentence):
 
     return sentence
 
+
 def load_essays_df(datafile):
     with open(datafile, "rt") as csvf:
         csvreader = csv.reader(csvf, delimiter=",", quotechar='"')

@@ -91,12 +91,7 @@ def training(dataset, inputs, full_targets, inp_dir, save_model):
             y_train, y_test = targets[train_index], targets[test_index]
 
             k += 1
-            acc, model = classification(
-                x_train,
-                x_test,
-                y_train,
-                y_test
-            )
+            acc, model = classification(x_train, x_test, y_train, y_test)
             expdata["acc"].append(100 * acc)
 
             # check if the current model is the best so far

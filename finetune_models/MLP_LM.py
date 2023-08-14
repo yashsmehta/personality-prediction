@@ -63,9 +63,9 @@ def training(dataset, inputs, full_targets, inp_dir, save_model):
     fold_acc = {}
     expdata = {}
     expdata["acc"], expdata["trait"], expdata["fold"] = [], [], []
-    
+
     best_models, best_model, best_accuracy = {}, None, 0.0
-    
+
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
         targets = full_targets[:, trait_idx]
@@ -108,7 +108,7 @@ def training(dataset, inputs, full_targets, inp_dir, save_model):
 
             max_val_accuracy = max(history.history["val_accuracy"])
             expdata["acc"].append(100 * max_val_accuracy)
- 
+
             # check if the current model is the best so far
             if max_val_accuracy > best_accuracy:
                 best_accuracy = max_val_accuracy

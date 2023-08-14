@@ -116,7 +116,9 @@ if __name__ == "__main__":
         embed_mode,
     ) = utils.parse_args_extractor()
     print(
-        "\n{} | {} | {} | {} | {}\n".format(dataset, embed, token_length, mode, embed_mode)
+        "\n{} | {} | {} | {} | {}\n".format(
+            dataset, embed, token_length, mode, embed_mode
+        )
     )
     batch_size = int(32)
     model, tokenizer, n_hl, hidden_dim = get_model(embed)
@@ -126,11 +128,7 @@ if __name__ == "__main__":
 
     map_dataset = MyMapDataset(dataset, tokenizer, token_length, DEVICE, mode)
 
-    data_loader = DataLoader(
-        dataset=map_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-    )
+    data_loader = DataLoader(dataset=map_dataset, batch_size=batch_size, shuffle=False,)
 
     if DEVICE == torch.device("cuda"):
         model = model.cuda()

@@ -1,4 +1,5 @@
 import os
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 from pathlib import Path
@@ -9,7 +10,7 @@ import numpy as np
 
 import re
 import sys
-import joblib 
+import joblib
 
 import tensorflow as tf
 
@@ -23,8 +24,7 @@ import utils.dataset_processors as dataset_processors
 
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
-    print("GPU found (", torch.cuda.get_device_name(
-        torch.cuda.current_device()), ")")
+    print("GPU found (", torch.cuda.get_device_name(torch.cuda.current_device()), ")")
     torch.cuda.set_device(torch.cuda.current_device())
     print("num device avail: ", torch.cuda.device_count())
 else:
@@ -72,13 +72,14 @@ def load_finetune_model(op_dir, finetune_model, dataset):
     path_model = op_dir + "finetune_" + str(finetune_model).lower()
 
     if not Path(path_model).is_dir():
-        print(
-            f"The directory with the selected model was not found: {path_model}")
+        print(f"The directory with the selected model was not found: {path_model}")
         sys.exit(0)
 
     def abort_if_model_not_exist(model_name):
         if not Path(model_name).is_file():
-            print(f"Model not found: {model_name}. Either the model was not trained or the model name is incorrect! Aborting...")
+            print(
+                f"Model not found: {model_name}. Either the model was not trained or the model name is incorrect! Aborting..."
+            )
             sys.exit(0)
 
     models = {}
@@ -121,7 +122,8 @@ def extract_bert_features(text, tokenizer, model, token_length, overlap=256):
     with torch.no_grad():
         for segment in segments:
             inputs = tokenizer(
-                " ".join(segment), return_tensors="pt", padding=True, truncation=True)
+                " ".join(segment), return_tensors="pt", padding=True, truncation=True
+            )
             inputs = inputs.to(DEVICE)
             outputs = model(**inputs)
             embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
@@ -144,10 +146,10 @@ def predict(new_text, embed, op_dir, token_length, finetune_model, dataset):
     model.to(DEVICE)
 
     new_embeddings = extract_bert_features(
-        new_text_pre, tokenizer, model, token_length, finetune_model)
+        new_text_pre, tokenizer, model, token_length, finetune_model
+    )
     print("finetune model: ", finetune_model)
-    models, predictions = load_finetune_model(
-        op_dir, finetune_model, dataset), {}
+    models, predictions = load_finetune_model(op_dir, finetune_model, dataset), {}
 
     for trait, model in models.items():
         try:
@@ -156,7 +158,7 @@ def predict(new_text, embed, op_dir, token_length, finetune_model, dataset):
             prediction = prediction[0][1]
 
             # find the index of the highest probability (predicted class)
-            predictions[trait] = prediction # get the probability of yes
+            predictions[trait] = prediction  # get the probability of yes
 
         except BaseException as e:
             print(f"Failed to make prediction: {e}")
@@ -180,7 +182,8 @@ if __name__ == "__main__":
     ) = utils.parse_args_predictor()
     print(
         "{} | {} | {} | {} | {} | {}".format(
-            dataset, embed, token_length, mode, embed_mode, finetune_model)
+            dataset, embed, token_length, mode, embed_mode, finetune_model
+        )
     )
     try:
         new_text = input("\nEnter a new text:")
