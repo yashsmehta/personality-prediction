@@ -12,6 +12,7 @@ from datetime import timedelta
 import pandas as pd
 from pathlib import Path
 from sklearn import svm
+import joblib
 
 import sys
 
@@ -55,19 +56,15 @@ def get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer):
     return inputs, full_targets
 
 
-def classification(X_train, X_test, y_train, y_test, file_name):
+def classification(X_train, X_test, y_train, y_test):
     """Run classification algorithm (SVM)"""
-    """ (commented lines can save SVM model) """
-
     classifier = svm.SVC(gamma="scale")
     classifier.fit(X_train, y_train)
-    # model_name = file_name + '.joblib'
-    # joblib.dump(classifier, model_name)
     acc = classifier.score(X_test, y_test)
-    return acc
+    return acc, classifier
 
 
-def training(dataset, inputs, full_targets):
+def training(dataset, inputs, full_targets, inp_dir, save_model):
     """Train model for each trait on 10-fold corss-validtion."""
     if dataset == "kaggle":
         trait_labels = ["E", "N", "F", "J"]
@@ -76,6 +73,8 @@ def training(dataset, inputs, full_targets):
     n_splits = 10
     expdata = {}
     expdata["acc"], expdata["trait"], expdata["fold"] = [], [], []
+
+    best_models, best_model, best_accuracy = {}, None, 0.0
 
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
@@ -92,15 +91,29 @@ def training(dataset, inputs, full_targets):
             y_train, y_test = targets[train_index], targets[test_index]
 
             k += 1
-            acc = classification(
+            acc, model = classification(
                 x_train,
                 x_test,
                 y_train,
-                y_test,
-                "SVM-" + dataset + "-" + embed + "-" + str(k) + "_t" + str(trait_idx),
+                y_test
             )
-            print(acc)
             expdata["acc"].append(100 * acc)
+
+            # check if the current model is the best so far
+            if acc > best_accuracy:
+                best_accuracy = acc
+                best_model = model
+
+            # store the best model for this trait
+            best_models[trait_labels[trait_idx]] = best_model
+
+    # save the best models to separate files
+    if str(save_model).lower() == "yes":
+        path = inp_dir + "finetune_svm_lm"
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+        for trait_label, best_model in best_models.items():
+            joblib.dump(best_model, f"{path}/SVM_LM_{trait_label}.pkl")
 
     print(expdata)
     df = pd.DataFrame.from_dict(expdata)
@@ -160,6 +173,7 @@ if __name__ == "__main__":
         mode,
         embed_mode,
         jobid,
+        save_model,
     ) = utils.parse_args()
     # embed_mode {mean, cls}
     # mode {512_head, 512_tail, 256_head_tail}
@@ -184,5 +198,5 @@ if __name__ == "__main__":
         hidden_dim = 1024
 
     inputs, full_targets = get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer)
-    df = training(dataset, inputs, full_targets)
+    df = training(dataset, inputs, full_targets, inp_dir, save_model)
     logging(df, log_expdata)

@@ -52,7 +52,7 @@ def get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer):
     return inputs, full_targets
 
 
-def training(dataset, inputs, full_targets):
+def training(dataset, inputs, full_targets, inp_dir, save_model):
     """Train MLP model for each trait on 10-fold corss-validtion."""
     if dataset == "kaggle":
         trait_labels = ["E", "N", "F", "J"]
@@ -63,7 +63,9 @@ def training(dataset, inputs, full_targets):
     fold_acc = {}
     expdata = {}
     expdata["acc"], expdata["trait"], expdata["fold"] = [], [], []
-
+    
+    best_models, best_model, best_accuracy = {}, None, 0.0
+    
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
         targets = full_targets[:, trait_idx]
@@ -104,7 +106,25 @@ def training(dataset, inputs, full_targets):
                 verbose=0,
             )
 
-            expdata["acc"].append(100 * max(history.history["val_accuracy"]))
+            max_val_accuracy = max(history.history["val_accuracy"])
+            expdata["acc"].append(100 * max_val_accuracy)
+ 
+            # check if the current model is the best so far
+            if max_val_accuracy > best_accuracy:
+                best_accuracy = max_val_accuracy
+                best_model = model
+
+        # store the best model for this trait
+        best_models[trait_labels[trait_idx]] = best_model
+
+    # save the best models to separate files
+    if str(save_model).lower() == "yes":
+        path = inp_dir + "finetune_mlp_lm"
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+        for trait_label, best_model in best_models.items():
+            best_model.save(f"{path}/MLP_LM_{trait_label}.h5")
+
     print(expdata)
     df = pd.DataFrame.from_dict(expdata)
     return df
@@ -163,6 +183,7 @@ if __name__ == "__main__":
         mode,
         embed_mode,
         jobid,
+        save_model,
     ) = utils.parse_args()
     # embed_mode {mean, cls}
     # mode {512_head, 512_tail, 256_head_tail}
@@ -187,5 +208,5 @@ if __name__ == "__main__":
         hidden_dim = 1024
 
     inputs, full_targets = get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer)
-    df = training(dataset, inputs, full_targets)
+    df = training(dataset, inputs, full_targets, inp_dir, save_model)
     logging(df, log_expdata)
