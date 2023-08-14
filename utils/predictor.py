@@ -32,6 +32,11 @@ else:
     print("Running on cpu")
 
 
+def softmax(x):
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x)
+
+
 def get_bert_model(embed):
     if embed == "bert-base":
         tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -73,7 +78,7 @@ def load_finetune_model(op_dir, finetune_model, dataset):
 
     def abort_if_model_not_exist(model_name):
         if not Path(model_name).is_file():
-            print(f"Model not found: {model_name}")
+            print(f"Model not found: {model_name}. Either the model was not trained or the model name is incorrect! Aborting...")
             sys.exit(0)
 
     models = {}
@@ -117,8 +122,9 @@ def extract_bert_features(text, tokenizer, model, token_length, overlap=256):
         for segment in segments:
             inputs = tokenizer(
                 " ".join(segment), return_tensors="pt", padding=True, truncation=True)
+            inputs = inputs.to(DEVICE)
             outputs = model(**inputs)
-            embeddings = outputs.last_hidden_state[:, 0, :].numpy()
+            embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
             embeddings_list.append(embeddings)
 
     if len(embeddings_list) > 1:
@@ -135,38 +141,30 @@ def predict(new_text, embed, op_dir, token_length, finetune_model, dataset):
 
     tokenizer, model = get_bert_model(embed)
 
-    if DEVICE == torch.device("cuda"):
-        model = model.cuda()
+    model.to(DEVICE)
 
     new_embeddings = extract_bert_features(
         new_text_pre, tokenizer, model, token_length, finetune_model)
-
+    print("finetune model: ", finetune_model)
     models, predictions = load_finetune_model(
         op_dir, finetune_model, dataset), {}
 
     for trait, model in models.items():
         try:
             prediction = model.predict(new_embeddings)
+            prediction = softmax(prediction)
+            prediction = prediction[0][1]
 
-            if re.search(r"MLP_LM", str(finetune_model).upper()):
-                # find the index of the highest probability (predicted class)
-                predicted_class_index = np.argmax(prediction, axis=1)[0]
-                predictions[trait] = predicted_class_index
-
-            if re.search(r"SVM_LM", str(finetune_model).upper()):
-                predictions[trait] = prediction[0]
+            # find the index of the highest probability (predicted class)
+            predictions[trait] = prediction # get the probability of yes
 
         except BaseException as e:
             print(f"Failed to make prediction: {e}")
 
-    labels = {
-        0: "No",
-        1: "Yes"
-    }
-
     print(f"\nPersonality predictions using {str(finetune_model).upper()}:")
     for trait, prediction in predictions.items():
-        print(f"{trait}: {labels[prediction]}")
+        binary_prediction = "Yes" if prediction > 0.5 else "No"
+        print(f"{trait}: {binary_prediction}: {prediction:.3f}")
 
 
 if __name__ == "__main__":
