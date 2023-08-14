@@ -6,16 +6,16 @@
 </p>
 
 <p align="center">
- <a href="https://github.com/automl/NASLib">
-    <img src="https://img.shields.io/badge/Python-3.7%20%7C%203.8-blue?style=for-the-badge&logo=python" />
+ <a href="https://www.python.org/downloads/release/python-3100/">
+    <img src="https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python" />
   </a>&nbsp;
   <a href="https://pytorch.org/">
-    <img src="https://img.shields.io/badge/pytorch-1.9-orange?style=for-the-badge&logo=pytorch" alt="PyTorch Version" />
+    <img src="https://img.shields.io/badge/pytorch-2.0-orange?style=for-the-badge&logo=pytorch" alt="PyTorch Version" />
   </a>&nbsp;
-  <a href="https://github.com/automl/NASLib">
+  <a href="https://opensource.org/license/mit/">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge&logo=open-source-initiative" alt="Open Source" />
   </a>
-  <a href="https://github.com/automl/NASLib">
+  <a href="https://github.com/yashsmehta/personality-prediction">
     <img src="https://img.shields.io/github/stars/yashsmehta/personality-prediction?style=for-the-badge&logo=github" alt="GitHub Repo Stars" />
   </a>
 </p>
