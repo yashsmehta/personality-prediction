@@ -1,8 +1,7 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
-import pandas as pd
-import csv
 import pickle
-import re
 import time
 from datetime import timedelta
 
@@ -12,7 +11,6 @@ from transformers import *
 
 import utils.gen_utils as utils
 from utils.data_utils import MyMapDataset
-import os
 import sys
 from pathlib import Path
 
