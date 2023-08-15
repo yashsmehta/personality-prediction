@@ -28,23 +28,17 @@ Here are a set of experiments written in tensorflow + pytorch to explore automat
 
 ## Setup
 
-Pull this repository from GitLab via:
-
-```bash
+Pull the repository from GitHub, followed by creating a new virtual environment (conda or venv):
+```python
 git clone https://github.com/yashsmehta/personality-prediction.git
-```
-
-Creating a new conda environment is recommended. Install PyTorch for your setup. Check the [PyTorch website](https://pytorch.org/get-started/locally/) to install the latest version on your system.
-
-```bash
+cd personality-prediction
 conda create -n mvenv python=3.10
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
-See the requirements.txt for the list of dependent packages which can be installed via:
-
-```bash
-pip install -r requirements.txt
+Install [poetry](https://github.com/python-poetry/poetry), and use that to install the dependencies required for running the project:
+```python
+curl -sSL https://install.python-poetry.org | python3 -
+poetry install
 ```
 
 ## Usage
