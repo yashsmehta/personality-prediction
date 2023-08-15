@@ -145,9 +145,7 @@ def predict(new_text, embed, op_dir, token_length, finetune_model, dataset):
 
     model.to(DEVICE)
 
-    new_embeddings = extract_bert_features(
-        new_text_pre, tokenizer, model, token_length, finetune_model
-    )
+    new_embeddings = extract_bert_features(new_text_pre, tokenizer, model, token_length)
     print("finetune model: ", finetune_model)
     models, predictions = load_finetune_model(op_dir, finetune_model, dataset), {}
 
