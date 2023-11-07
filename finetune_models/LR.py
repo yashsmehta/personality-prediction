@@ -9,6 +9,11 @@ import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 
+# add parent directory to the path as well, if running from the finetune folder
+parent_dir = os.path.dirname(os.getcwd())
+sys.path.insert(0, parent_dir)
+
+sys.path.insert(0, os.getcwd())
 import utils.gen_utils as utils
 
 
