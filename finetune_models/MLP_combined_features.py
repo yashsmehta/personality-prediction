@@ -1,5 +1,5 @@
 import os
-
+import sys
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import tensorflow as tf
 import numpy as np
@@ -8,6 +8,12 @@ import pickle
 import time
 import pandas as pd
 from pathlib import Path
+
+# add parent directory to the path as well, if running from the finetune folder
+parent_dir = os.path.dirname(os.getcwd())
+sys.path.insert(0, parent_dir)
+
+sys.path.insert(0, os.getcwd())
 
 import utils.gen_utils as utils
 import utils.dataset_processors as dataset_processors
@@ -56,7 +62,7 @@ def get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer):
     full_targets = full_targets.set_index(["order"])
 
     if dataset == "essays":
-        dump_data = dataset_processors.load_essays_df("../data/essays/essays.csv")
+        dump_data = dataset_processors.load_essays_df("/content/personailty-prediction/data/essays/essays.csv")
         trait_labels = ["EXT", "NEU", "AGR", "CON", "OPN"]
 
     elif dataset == "kaggle":
@@ -74,7 +80,7 @@ def get_inputs(inp_dir, dataset, embed, embed_mode, mode, layer):
 def merge_features(embedding, other_features, trait_labels):
     """Merge BERT and Psychologic features."""
     if dataset == "essays":
-        orders = pd.read_csv("../data/essays/author_id_order.csv").set_index(["order"])
+        orders = pd.read_csv("/content/personailty-prediction/data/essays/author_id_order.csv").set_index(["order"])
         df = pd.merge(embedding, orders, left_index=True, right_index=True).set_index(
             ["user"]
         )
@@ -91,7 +97,7 @@ def training(inputs, full_targets, trait_labels):
     n_splits = 10
     expdata = {}
     expdata["acc"], expdata["trait"], expdata["fold"] = [], [], []
-
+    best_models, best_model, best_accuracy = {}, None, 0.0
     for trait_idx in range(full_targets.shape[1]):
         # convert targets to one-hot encoding
         targets = full_targets[:, trait_idx]
@@ -129,7 +135,25 @@ def training(inputs, full_targets, trait_labels):
                 validation_data=(x_test, y_test),
                 verbose=0,
             )
-            expdata["acc"].append(100 * max(history.history["val_accuracy"]))
+            max_val_accuracy = max(history.history["val_accuracy"])
+            expdata["acc"].append(100 * max_val_accuracy)
+
+            # check if the current model is the best so far
+            if max_val_accuracy > best_accuracy:
+                best_accuracy = max_val_accuracy
+                best_model = model
+
+        # store the best model for this trait
+        best_models[trait_labels[trait_idx]] = best_model
+
+    # save the best models to separate files
+    if str(save_model).lower() == "yes":
+        path = inp_dir + "finetune_mlp_lm"
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+        for trait_label, best_model in best_models.items():
+            best_model.save(f"{path}/MLP_LM_{trait_label}.h5")
+
     print(expdata)
     df = pd.DataFrame.from_dict(expdata)
     return df
@@ -188,6 +212,7 @@ if __name__ == "__main__":
         mode,
         embed_mode,
         jobid,
+        save_model,
     ) = utils.parse_args()
     print("{} : {} : {} : {} : {}".format(dataset, embed, layer, mode, embed_mode))
     n_classes = 2
