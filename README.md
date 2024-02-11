@@ -61,15 +61,18 @@ Results Table             |  Language Models vs Psycholinguistic Traits
 
 
 #### Predicting personality on unseen text
+
 Follow the steps below for predicting personality (e.g. the Big-Five: OCEAN traits) on a new text/essay:
 
-1. You will have to train your model -- for that, first choose your training dataset (e.g. essays).
-2. Extract features for each of the essays by passing it through a language model of your choice (e.g. BERT) by running the LM_extractor.py file. This will create a pickle file containing the training features.
-3. Next, train the finetuning model. Let's say it is a simple MLP (this was the best performing one, as can be seen from Table 2 of the paper). Use the extracted features from the LM to train this model. Here, you can experiment with 1) different models (e.g. SVMs, Attention+RNNs, etc.) and 2) concatenating the corresponding psycholinguistic features for each of the essays.
-4. You will have to write code to save the optimal model parameters after the training is complete.
-5. For the new data, first pass it through the SAME language model feature extraction pipeline and save this. Load your pre-trained model into memory and run it on these extracted features.
+```bash
+python finetune_models/MLP_LM.py -save_model 'yes'
+```
 
-Note: The text pre-processing (e.g. tokenization, etc.) before passing it through the language model should be the SAME for training and testing.
+Now use the script below to predict the unseen text:
+
+```bash
+python unseen_predictor.py
+```
 
 ## Running Time
 
